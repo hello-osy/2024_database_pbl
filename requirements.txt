@@ -1,1 +1,4 @@
 flask==3.0.3
+flask_cors==5.0.0
+python-dotenv==0.21.0
+pymysql==1.1.1
