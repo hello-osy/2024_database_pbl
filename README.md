@@ -105,11 +105,3 @@ YMS는 장비 관리에 특화된 시스템으로, Yard 내 장비와 사용자 
 ```
 
 
-
-### 2. vercel 로컬 환경 구축
-
-```cmd
-> npm i -g vercel
-> vercel login
-> vercel .
-```
