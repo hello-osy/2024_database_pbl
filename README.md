@@ -1,86 +1,58 @@
-# 2024_database_pbl
+# Cloud Run Hello World with Cloud Code
 
-## 팀 구성
+"Hello World" is a [Cloud Run](https://cloud.google.com/run/docs) application that renders a simple webpage.
 
-| 팀원       | 직책   | 역할       |
-| ---------- | ------ | ---------- |
-| 오상영     | 팀장   | 벡엔드     |
-| 이재욱     | 개발자 | 벡엔드     |
-| 한륜헌     | 개발자 | 프런트엔드 |
-| 바야스갈랑 | 개발자 | 프런트엔드 |
-| 서영건     | 개발자 | 프런트엔드 |
+For details on how to use this sample as a template in Cloud Code, read the documentation for Cloud Code for [VS Code](https://cloud.google.com/code/docs/vscode/quickstart-cloud-run?utm_source=ext&utm_medium=partner&utm_campaign=CDR_kri_gcp_cloudcodereadmes_012521&utm_content=-) or [IntelliJ](https://cloud.google.com/code/docs/intellij/quickstart-cloud-run?utm_source=ext&utm_medium=partner&utm_campaign=CDR_kri_gcp_cloudcodereadmes_012521&utm_content=-).
 
+### Table of Contents
+* [Getting Started with VS Code](#getting-started-with-vs-code)
+* [Getting Started with IntelliJ](#getting-started-with-intellij)
+* [Sign up for User Research](#sign-up-for-user-research)
 
+---
+## Getting Started with VS Code
 
-## 웹 링크
+### Run the app locally with the Cloud Run Emulator
+1. Click on the Cloud Code status bar and select 'Run on Cloud Run Emulator'.  
+![image](./img/status-bar.png)
 
-- 개발용 링크 : https://vercel.com/limulu-ks-projects/db/6G1NcvdXsQQLHDUD8KfCDA2vXCn9
-- 사용자용 링크 : https://db-ecru.vercel.app/
+2. Use the Cloud Run Emulator dialog to specify your [builder option](https://cloud.google.com/code/docs/vscode/deploying-a-cloud-run-app#deploying_a_cloud_run_service). Cloud Code supports Docker, Jib, and Buildpacks. See the skaffold documentation on [builders](https://skaffold.dev/docs/pipeline-stages/builders/) for more information about build artifact types.  
+![image](./img/build-config.png)
 
+3. Click ‘Run’. Cloud Code begins building your image.
 
+4. View the build progress in the OUTPUT window. Once the build has finished, click on the URL in the OUTPUT window to view your live application.  
+![image](./img/cloud-run-url.png)
 
-## 목표
+5. To stop the application, click the stop icon on the Debug Toolbar.
 
-### Yard Management System 구현
+---
+## Getting Started with IntelliJ
 
-- 장비 관리
-  - yard 내 장비 이동
-    - 드래그&드롭으로 내부에서의 장비 이동
-  - yard 내 장비 연결 및 스케쥴 할당
-    - 장비 연결 :
-      1. Truck
-      2. Truck + Chassis
-      3. Truck + Chassis + Container 
-      4. Truck + Trailer
-    - 스케쥴 할당 : 준비된 장비, 드라이버, 도착 장소, 출발 시간, 예정 도착 시간
-  - 로그 추적
-  - 장비 증감
-    - 장비 추가
-    - 새 장비 위치 할당
-- 사용자 관리
-  - 로그인 -> 매니저
-    - 장비 관리
-    - 거점 관리
-  - 로그임 -> 드라이버
-    - 스케쥴 확인
-    - 출발 및 도착 정보 등록
+### Run the app locally with the Cloud Run Emulator
 
+#### Define run configuration
 
+1. Click the Run/Debug configurations dropdown on the top taskbar and select 'Edit Configurations'.  
+![image](./img/edit-config.png)
 
-## 팀 규칙
+2. Select 'Cloud Run: Run Locally' and specify your [builder option](https://cloud.google.com/code/docs/intellij/developing-a-cloud-run-app#defining_your_run_configuration). Cloud Code supports Docker, Jib, and Buildpacks. See the skaffold documentation on [builders](https://skaffold.dev/docs/pipeline-stages/builders/) for more information about build artifact types.  
+![image](./img/local-build-config.png)
 
-- 매주 화요일에 모여서 회의
-- 각자 개발 끝나면 develop 브랜치에 합치기
+#### Run the application
+1. Click the Run/Debug configurations dropdown and select 'Cloud Run: Run Locally'. Click the run icon.  
+![image](./img/config-run-locally.png)
 
+2. View the build process in the output window. Once the build has finished, you will receive a notification from the Event Log. Click 'View' to access the local URLs for your deployed services.  
+![image](./img/local-success.png)
 
+---
+## Sign up for User Research
 
-## 로컬에서 사용방법
+We want to hear your feedback!
 
-### 1. node js 다운로드
+The Cloud Code team is inviting our user community to sign-up to participate in Google User Experience Research. 
 
-```cmd
-> npm -v
-```
+If you’re invited to join a study, you may try out a new product or tell us what you think about the products you use every day. At this time, Google is only sending invitations for upcoming remote studies. Once a study is complete, you’ll receive a token of thanks for your participation such as a gift card or some Google swag. 
 
-
-
-### 2. vercel 로컬 환경 구축
-
-```cmd
-> npm i -g vercel
-> vercel login
-> vercel .
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
+[Sign up using this link](https://google.qualtrics.com/jfe/form/SV_4Me7SiMewdvVYhL?reserved=1&utm_source=In-product&Q_Language=en&utm_medium=own_prd&utm_campaign=Q1&productTag=clou&campaignDate=January2021&referral_code=UXbT481079) and answer a few questions about yourself, as this will help our research team match you to studies that are a great fit.
