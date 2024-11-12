@@ -10,6 +10,12 @@
 | 바야스갈랑 | 개발자 | 프런트엔드 |
 | 서영건     | 개발자 | 프런트엔드 |
 
+---
+
+## 웹 링크
+
+- **개발용 링크**: [https://vercel.com/limulu-ks-projects/db/6G1NcvdXsQQLHDUD8KfCDA2vXCn9](https://vercel.com/limulu-ks-projects/db/6G1NcvdXsQQLHDUD8KfCDA2vXCn9)
+- **사용자용 링크**: [https://db-ecru.vercel.app/](https://db-ecru.vercel.app/)
 
 ---
 
@@ -17,8 +23,6 @@
 
 ### 개요
 저희의 YMS는 장비 관리에 특화된 시스템으로, Yard 내 장비와 사용자 관리를 효율적으로 수행하여 물류 흐름을 최적화하고 운영 효율성을 극대화하는 것을 목표로 합니다.
-
-
 
 ### 장비 관리의 중요성
 
@@ -132,6 +136,8 @@
 
 공식 다운로드 링크: <a href="https://www.docker.com/products/docker-desktop/">도커 다운 링크</a>
 
+
+
 ### 2. git clone
 
 ```bash
@@ -139,10 +145,15 @@ git clone
 cd .\2024_database_pbl\
 ```
 
+
+
 ### 3. docker-compose 실행
 
 ```bash
 docker-compose up -b --build
+```
+
+
 
 ### 4. flask 메인 페이지 접속 및 테스트
 
@@ -208,3 +219,8 @@ user password : user_password
    ```bash
    docker rm [container_name or container_id]
    ```
+
+   
+
+
+
