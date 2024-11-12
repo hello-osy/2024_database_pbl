@@ -1,17 +1,15 @@
-# Python image to use.
-FROM python:3.12-alpine
+# 베이스 이미지로 Python 사용
+FROM python:3.8
 
-# Set the working directory to /app
+# 작업 디렉토리 설정
 WORKDIR /app
 
-# copy the requirements file used for dependencies
-COPY requirements.txt .
+# 종속성 파일 복사 및 설치
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
-
-# Copy the rest of the working directory contents into the container at /app
+# Flask 애플리케이션 파일 복사
 COPY . .
 
-# Run app.py when the container launches
-ENTRYPOINT ["python", "app.py"]
+# Flask 애플리케이션 실행
+CMD ["python", "app.py"]
