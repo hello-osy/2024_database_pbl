@@ -10,12 +10,6 @@
 | 바야스갈랑 | 개발자 | 프런트엔드 |
 | 서영건     | 개발자 | 프런트엔드 |
 
----
-
-## 웹 링크
-
-- **개발용 링크**: [https://vercel.com/limulu-ks-projects/db/6G1NcvdXsQQLHDUD8KfCDA2vXCn9](https://vercel.com/limulu-ks-projects/db/6G1NcvdXsQQLHDUD8KfCDA2vXCn9)
-- **사용자용 링크**: [https://db-ecru.vercel.app/](https://db-ecru.vercel.app/)
 
 ---
 
@@ -138,8 +132,6 @@
 
 공식 다운로드 링크: <a href="https://www.docker.com/products/docker-desktop/">도커 다운 링크</a>
 
-
-
 ### 2. git clone
 
 ```bash
@@ -147,15 +139,10 @@ git clone
 cd .\2024_database_pbl\
 ```
 
-
-
 ### 3. docker-compose 실행
 
 ```bash
 docker-compose up -b --build
-```
-
-
 
 ### 4. flask 메인 페이지 접속 및 테스트
 
@@ -221,8 +208,3 @@ user password : user_password
    ```bash
    docker rm [container_name or container_id]
    ```
-
-   
-
-
-
