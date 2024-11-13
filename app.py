@@ -5,7 +5,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:user_password@dbp_mysql_server/my_database'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:user_password@dbp_mysql_server/YMS_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
 
@@ -51,7 +51,7 @@ def test_db_connection():
 @app.route('/users')
 def get_users():
     try:
-        result = db.session.execute(text('SELECT * FROM users'))
+        result = db.session.execute(text('SELECT * FROM User'))
         users = [dict(row._mapping) for row in result]
         return jsonify(users)
     except Exception as e:

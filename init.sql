@@ -2,6 +2,12 @@
 CREATE DATABASE IF NOT EXISTS `YMS_db`;
 USE `YMS_db`;
 
+-- 사용자에게 권한 부여
+GRANT ALL PRIVILEGES ON YMS_db.* TO 'user'@'%';
+
+-- 변경 사항 적용
+FLUSH PRIVILEGES;
+
 -- Address 테이블 생성
 CREATE TABLE `Address` (
     `Address_ID` INT NOT NULL AUTO_INCREMENT,
