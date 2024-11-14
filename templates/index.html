@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YML Management: Onepiece</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            function toTestDbPage() {
+                window.location.href = '/test_db';
+            }
+            function toUsersPage() {
+                window.location.href = '/users';
+            }
+            function toTransportLogsPage() {
+                window.location.href = '/transport_logs_page';
+            }
+
+            // 버튼 이벤트 핸들러 설정
+            document.getElementById("testDbButton").onclick = toTestDbPage;
+            document.getElementById("usersButton").onclick = toUsersPage;
+            document.getElementById("transportLogsButton").onclick = toTransportLogsPage;
+        });
+    </script>
+</head>
+<body>
+    <h1>Main test page</h1>
+    <!-- <a href="{{ url_for('test_db') }}">database test pages</a><br>
+    <a href="{{ url_for('users') }}">get users data</a><br>
+    <a href="{{ url_for('transport_logs_page') }}">get logs data</a> -->
+    <div>
+        <button id="testDbButton" style="position: left;">DB 테스트</button>
+        <button id="usersButton" style="position: left;">전체 유저 정보</button>
+        <button id="transportLogsButton" style="position: left;">로그 확인</button>
+    </div>
+</body>
+</html>
