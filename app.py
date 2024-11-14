@@ -1,8 +1,9 @@
 import time
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:user_password@dbp_mysql_server/YMS_db'
@@ -34,9 +35,9 @@ with app.app_context():
 # 기본 URL: 연결 상태 확인
 @app.route('/')
 def index():
-    return jsonify({"status": "connected"})
+    return render_template('/index.html')
 
-@app.route('/test_db')
+@app.route('/test_db', endpoint='test_db')
 def test_db_connection():
     try:
         # MySQL 서버에 간단한 쿼리 실행
@@ -48,7 +49,7 @@ def test_db_connection():
 
 
 # /users URL: 직접 SQL 쿼리로 users 테이블 조회
-@app.route('/users')
+@app.route('/users', endpoint='users')
 def get_users():
     try:
         result = db.session.execute(text('SELECT * FROM User'))
@@ -56,6 +57,22 @@ def get_users():
         return jsonify(users)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# transport_log 엔드포인트 추가
+@app.route('/transport_logs_page')
+def transport_logs_page():
+    return render_template('transport_logs.html')
+
+@app.route('/transport_logs', endpoint='transport_logs')
+def get_transport_logs():
+    try:    
+        result = db.session.execute(text('SELECT * FROM Transport_Log;'))
+        transport_logs = [dict(row._mapping) for row in result]
+        return jsonify(transport_logs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 

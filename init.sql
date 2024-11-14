@@ -153,7 +153,7 @@ CREATE TABLE `Password` (
 );
 
 -- Tranport_Log 테이블 생성
-CREATE TABLE `Tranport_Log` (
+CREATE TABLE `Transport_Log` (
     `Log_ID` INT NOT NULL AUTO_INCREMENT,
     `Driver_ID` VARCHAR(20) NOT NULL,
     `Container_ID` VARCHAR(20) NOT NULL,
@@ -164,7 +164,7 @@ CREATE TABLE `Tranport_Log` (
     `Depart_Date` DATE NULL,
     `Arrive_Zone_ID` VARCHAR(30) NOT NULL,
     `Arrive_Date` DATE NULL,
-    `Log_Memo` VARCHAR(30) NULL,
+    `Log_Memo` VARCHAR(60) NULL,
     PRIMARY KEY (`Log_ID`),
     FOREIGN KEY (`Driver_ID`) REFERENCES `Driver`(`User_ID`),
     FOREIGN KEY (`Container_ID`) REFERENCES `Container`(`Container_ID`),
@@ -257,7 +257,9 @@ INSERT INTO `User` (`User_ID`, `UserName`, `Email`, `Role_ID`, `Phone_Number`) V
 
 -- Driver 데이터 삽입
 INSERT INTO `Driver` (`User_ID`, `Current_Location`, `Current_Status`, `Private_Truck_Info`, `Truck_ID`) VALUES
-    ('driver001', 1, 'Active', 'Private Info', 'TRK1');
+    ('driver001', 1, 'Active', 'Private Info', 'TRK1'),
+    ('driver002', 1, 'Active', 'Private Info', 'TRK2');
+-- ('driver003', 'Driver 3', 'driver3@example.com', 2, '123-456-3333');
 
 -- Manager 데이터 삽입
 INSERT INTO `Manager` (`User_ID`, `Position`, `Office_Phone`, `Division_ID`) VALUES
@@ -270,3 +272,12 @@ INSERT INTO `Password` (`User_ID`, `Password`) VALUES
     ('driver002', 'driver002'),
     ('manager001', 'manager001'),
     ('manager002', 'manager002');
+
+-- Transport_Log 데이터 삽입
+-- Transport_Log 테스트 데이터 삽입
+INSERT INTO `Transport_Log` (`Driver_ID`, `Container_ID`, `Chassis_ID`, `Truck_ID`, `Trailer_ID`, `Depart_Zone_ID`, `Depart_Date`, `Arrive_Zone_ID`, `Arrive_Date`, `Log_Memo`) VALUES
+    ('driver001', 'CONT00001', 'CHAS1', 'TRK1', 'TRLR000001', 'CHASSIS_ZONE_01', '2024-11-01', 'TRUCK_ZONE_01', '2024-11-02', 'First transport log entry'),
+    ('driver002', 'CONT00002', 'CHAS2', 'TRK2', 'TRLR000002', 'CHASSIS_ZONE_02', '2024-11-03', 'TRUCK_ZONE_02', '2024-11-04', 'Second transport log entry'),
+    ('driver001', 'CONT00001', 'CHAS1', 'TRK1', 'TRLR000001', 'CONTAINER_ZONE_01', '2024-11-05', 'TRAILER_ZONE_01', '2024-11-06', 'Repeat transport log for same driver'),
+    ('driver002', 'CONT00002', 'CHAS2', 'TRK2', 'TRLR000002', 'CONTAINER_ZONE_02', '2024-11-07', 'TRUCK_ZONE_03', '2024-11-08', 'Different arrival zone for driver002'),
+    ('driver001', 'CONT00001', 'CHAS3', 'TRK3', 'TRLR000002', 'TRUCK_ZONE_03', '2024-11-09', 'CHASSIS_ZONE_04', '2024-11-10', 'Testing chassis and truck change');
