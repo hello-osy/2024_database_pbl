@@ -1,6 +1,15 @@
 <!-- src/views/Yard1.vue -->
 <template>
   <div class="yard-content">
+    <!-- 검색 입력 필드 -->
+    <div class="search-bar">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search by ID (e.g., T_001, C_002)"
+      />
+    </div>
+
     <!-- Stats Cards Section -->
     <div class="stats-row">
       <div class="stats-card" v-for="stats in statsCards" :key="stats.title">
@@ -16,7 +25,7 @@
 
     <!-- Custom Section for Yard Layout (2x2) -->
     <div class="yard-layout">
-      <div class="site" v-for="(site, index) in siteStatus" :key="index">
+      <div class="site" v-for="(site, index) in filteredSiteStatus" :key="index">
         <h3>{{ site.name }}</h3>
         <div class="truck-list">
           <div
@@ -44,6 +53,7 @@ export default {
     };
 
     return {
+      searchQuery: "", // 검색어 저장
       statsCards: [
         {
           type: "warning",
@@ -90,6 +100,26 @@ export default {
       ],
     };
   },
+  computed: {
+    filteredSiteStatus() {
+      if (!this.searchQuery) {
+        return this.siteStatus;
+      }
+      
+      // 검색어에 맞는 트럭만 필터링
+      return this.siteStatus.map(site => {
+        const filteredTrucks = site.trucks.filter(truck =>
+          truck.id.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+        
+        // 해당 사이트에 일치하는 트럭이 있을 경우만 반환
+        return {
+          ...site,
+          trucks: filteredTrucks,
+        };
+      }).filter(site => site.trucks.length > 0);
+    },
+  },
 };
 </script>
 
@@ -97,12 +127,27 @@ export default {
 .yard-content {
   padding: 20px;
 }
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
 .stats-row {
   display: flex;
   gap: 20px;
   margin-bottom: 30px;
   width: 100%;
 }
+
 .stats-card {
   display: flex;
   align-items: center;
@@ -113,30 +158,47 @@ export default {
   flex: 1;
   min-width: 150px;
 }
+
 .icon-container {
   font-size: 2rem;
   margin-right: 15px;
 }
-.icon-warning { color: #ffc107; }
-.icon-success { color: #28a745; }
-.icon-danger { color: #dc3545; }
-.icon-info { color: #17a2b8; }
+
+.icon-warning {
+  color: #ffc107;
+}
+
+.icon-success {
+  color: #28a745;
+}
+
+.icon-danger {
+  color: #dc3545;
+}
+
+.icon-info {
+  color: #17a2b8;
+}
+
 .stats-info p {
   margin: 0;
   font-size: 0.9rem;
   color: #888;
 }
+
 .stats-info h3 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: bold;
 }
+
 .yard-layout {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   width: 100%;
 }
+
 .site {
   padding: 15px;
   border-radius: 8px;
@@ -144,16 +206,19 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   min-width: 200px;
 }
+
 .site h3 {
   font-size: 1.2rem;
   margin-bottom: 10px;
   color: #333;
 }
+
 .truck-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
+
 .truck-icon {
   width: 60px;
   height: 60px;
@@ -166,12 +231,15 @@ export default {
   color: #fff;
   text-align: center;
 }
+
 .in-dock {
   background-color: #007bff;
 }
+
 .in-parking {
   background-color: #28a745;
 }
+
 .wrong-location {
   background-color: #dc3545;
 }

@@ -1,6 +1,7 @@
 // src/router/index.js
 import Vue from "vue";
 import Router from "vue-router";
+import Division from '@/pages/Division.vue';
 import Yard1 from "@/pages/Yard1.vue";
 import Yard2 from "@/pages/Yard2.vue";
 import Yard3 from "@/pages/Yard3.vue";
@@ -10,7 +11,17 @@ import DriverProfiles from "@/pages/DriverProfiles.vue";
 Vue.use(Router);
 
 export default new Router({
+  mode: 'hash', // hash 모드 설정
   routes: [
+    {
+      path: '/',
+      redirect: '/division', // 기본 경로를 Division 페이지로 리디렉션
+    },
+    {
+      path: '/division',
+      name: "Division", 
+      component: Division
+    },
     {
       path: "/yard1",
       name: "Yard1",
@@ -38,7 +49,7 @@ export default new Router({
     },
     {
       path: "*",
-      redirect: "/yard1",
+      redirect: "/division", // 잘못된 경로는 Division 페이지로 리디렉션
     },
   ],
 });
