@@ -39,6 +39,12 @@
               <p>Settings</p>
             </a>
           </li>
+          <li class="nav-item">
+            <button class="nav-link btn btn-link" @click="logout">
+              <i class="ti-power-off"></i>
+              <p>Logout</p>
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -72,6 +78,12 @@ export default {
     },
     hideSidebar() {
       this.$sidebar.displaySidebar(false);
+    },
+    logout() {
+      // 인증 상태 초기화
+      localStorage.removeItem("loggedIn");
+      // 로그인 페이지로 리다이렉트
+      window.location.href = "/login";
     },
   },
 };

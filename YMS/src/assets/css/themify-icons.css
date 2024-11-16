@@ -1079,3 +1079,13 @@
 .ti-rss-alt:before {
 	content: "\e75f";
 }
+.ti-log-icon {
+    background-image: url('@/assets/img/log.png');
+    background-size: contain;
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+	vertical-align: middle; /* 텍스트와 수직 정렬 */
+    object-fit: contain; /* 이미지 비율 유지 */
+	filter: invert(70%);
+}

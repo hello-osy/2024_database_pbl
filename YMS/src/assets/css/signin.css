@@ -1,0 +1,81 @@
+/* 기본 스타일 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f4f4f4;
+}
+
+/* 로그인 페이지 스타일 */
+.login-container {
+    text-align: center;
+}
+
+.login-box {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    width: 350px;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: 18px;
+    margin: 15px 0 5px;
+    display: block;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#errorMessage {
+    color: red;
+    margin-top: 10px;
+}
+
+/* Sign Out 버튼 스타일 */
+.signout {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.signout a {
+    text-decoration: none;
+    color: #4CAF50;
+    font-size: 18px;
+}
+
+.signout a:hover {
+    color: #45a049;
+}
