@@ -1,4 +1,4 @@
-#Frontend project
+# Frontend project
 
 ### 변경 사항
 1. 로그인 페이지 구성 및 manager 페이지와 연동 (id: manager001, pw: 1234)
