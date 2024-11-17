@@ -149,15 +149,24 @@ cd .\2024_database_pbl\
 
 ### 3. vue build 파일 생성
 
-```bash
-npm run build
-```
+- vue.config.js 파일 수정
 
-dist 파일 생성 후 templates 폴더 하위로 이동
+  ```js
+  module.exports = {
+    lintOnSave: false,
+    publicPath: "/",  // Flask의 경로와 일치하도록 설정
+  }
+  ```
 
+- build 파일 생성
 
+  ```bash
+  npm run build
+  ```
 
-파일 수정 과정 한번만 수행(**이미 수정 되어 있음**)
+- dist 파일 생성 후 templates 폴더 하위로 이동
+
+#### 파일 수정 과정(**이미 수정 되어 있음**)
 
 - app.py 파일 수정
 
@@ -178,8 +187,6 @@ dist 파일 생성 후 templates 폴더 하위로 이동
       # 정적 파일 서빙 (css, js, img 등)
       return app.send_static_file(path)
   ```
-
-  
 
 - dockerfile 수정
 
