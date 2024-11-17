@@ -5,7 +5,11 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
 import os
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="templates/dist",  # 정적 파일 경로
+    template_folder="templates/dist"  # 템플릿 파일 경로
+)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:user_password@dbp_mysql_server/YMS_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
@@ -32,46 +36,58 @@ if not connected:
 with app.app_context():
     db.create_all()
 
-# 기본 URL: 연결 상태 확인
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('/index.html')
+    # Vue의 index.html 반환
+    return render_template("index.html")
 
-@app.route('/test_db', endpoint='test_db')
-def test_db_connection():
-    try:
-        # MySQL 서버에 간단한 쿼리 실행
-        result = db.session.execute(text('SELECT 1'))
-        result_list = [dict(row._mapping) for row in result]  # 각 행을 딕셔너리로 변환
-        return jsonify({"status": "connected", "result": result_list})
-    except Exception as e:
-        return jsonify({"status": "not connected", "error": str(e)})
+@app.route("/<path:path>")
+def static_files(path):
+    # 정적 파일 서빙 (css, js, img 등)
+    return app.send_static_file(path)
 
 
-# /users URL: 직접 SQL 쿼리로 users 테이블 조회
-@app.route('/users', endpoint='users')
-def get_users():
-    try:
-        result = db.session.execute(text('SELECT * FROM User'))
-        users = [dict(row._mapping) for row in result]
-        return jsonify(users)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+# # 기본 URL: 연결 상태 확인
+# @app.route('/')
+# def index():
+#     return render_template('/index.html')
+
+# @app.route('/test_db', endpoint='test_db')
+# def test_db_connection():
+#     try:
+#         # MySQL 서버에 간단한 쿼리 실행
+#         result = db.session.execute(text('SELECT 1'))
+#         result_list = [dict(row._mapping) for row in result]  # 각 행을 딕셔너리로 변환
+#         return jsonify({"status": "connected", "result": result_list})
+#     except Exception as e:
+#         return jsonify({"status": "not connected", "error": str(e)})
 
 
-# transport_log 엔드포인트 추가
-@app.route('/transport_logs_page')
-def transport_logs_page():
-    return render_template('transport_logs.html')
+# # /users URL: 직접 SQL 쿼리로 users 테이블 조회
+# @app.route('/users', endpoint='users')
+# def get_users():
+#     try:
+#         result = db.session.execute(text('SELECT * FROM User'))
+#         users = [dict(row._mapping) for row in result]
+#         return jsonify(users)
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
-@app.route('/transport_logs', endpoint='transport_logs')
-def get_transport_logs():
-    try:    
-        result = db.session.execute(text('SELECT * FROM Transport_Log;'))
-        transport_logs = [dict(row._mapping) for row in result]
-        return jsonify(transport_logs)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+# # transport_log 엔드포인트 추가
+# @app.route('/transport_logs_page')
+# def transport_logs_page():
+#     return render_template('transport_logs.html')
+
+# @app.route('/transport_logs', endpoint='transport_logs')
+# def get_transport_logs():
+#     try:    
+#         result = db.session.execute(text('SELECT * FROM Transport_Log;'))
+#         transport_logs = [dict(row._mapping) for row in result]
+#         return jsonify(transport_logs)
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 
 

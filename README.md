@@ -147,7 +147,57 @@ cd .\2024_database_pbl\
 
 
 
-### 3. docker-compose 실행
+### 3. vue build 파일 생성
+
+- vue.config.js 파일 수정
+
+  ```js
+  module.exports = {
+    lintOnSave: false,
+    publicPath: "/",  // Flask의 경로와 일치하도록 설정
+  }
+  ```
+
+- build 파일 생성
+
+  ```bash
+  npm run build
+  ```
+
+- dist 파일 생성 후 templates 폴더 하위로 이동
+
+#### 파일 수정 과정(**이미 수정 되어 있음**)
+
+- app.py 파일 수정
+
+  ```python
+  # 경로 설정
+  app = Flask(
+      __name__,
+      static_folder="templates/dist",  # 정적 파일 경로
+      template_folder="templates/dist"  # 템플릿 파일 경로
+  )
+  @app.route("/")
+  def index():
+      # Vue의 index.html 반환
+      return render_template("index.html")
+  
+  @app.route("/<path:path>")
+  def static_files(path):
+      # 정적 파일 서빙 (css, js, img 등)
+      return app.send_static_file(path)
+  ```
+
+- dockerfile 수정
+
+  ```bash
+  # Vue 빌드 파일 복사
+  COPY templates/dist /app/templates/dist
+  ```
+
+
+
+### 4. docker-compose 실행
 
 ```bash
 docker-compose up -b --build
@@ -155,7 +205,7 @@ docker-compose up -b --build
 
 
 
-### 4. flask 메인 페이지 접속 및 테스트
+### 5. flask 메인 페이지 접속 및 테스트
 
 - 메인 페이지 : http://localhost:5000/
 - db 연결 테스트 페이지 : http://localhost:5000/test_db
