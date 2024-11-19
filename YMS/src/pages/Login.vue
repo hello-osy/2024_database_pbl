@@ -23,6 +23,7 @@
 </template>
 
 <script>
+//import axios from 'axios'
     export default {
         data() {
           return {
@@ -49,13 +50,39 @@
           handleLogin() {
             if (this.role === "manager" && this.username === "manager001" && this.password === "1234") {
               localStorage.setItem("loggedIn", "true"); // 인증 상태 저장
-              this.$router.push({name: "dashboard"}); // 관리자 페이지로 이동
-            } else if (this.role === "driver" && this.username === "driver001" && this.password === "5678") {
-              this.$router.push({name: "driver"});  // 드라이버 페이지로 이동
+              this.$router.push({name: "division"}); // 관리자 페이지로 이동
+            } else if (this.role === "driver" && this.username === "driver001" && this.password === "1234") {
+              localStorage.setItem("loggedIn", "true");
+              this.$router.push({name: "driverprofile"});  // 드라이버 페이지로 이동
             } else {
               this.errorMessage = "Invalid username or password.";
             }
           },
+          // async login() {
+          //   try {
+          //     const response = await axios.post('', {
+          //       id: this.username,
+          //       password: this.password,
+          //     });
+
+          //     if (response.data.success) {
+          //       const userId = this.username;
+          //       const userPw = this.password;
+
+          //       if(userId === "manager001" && this.password === "1234") {
+          //         //localStorage.setItem("loggedIn", "ture");
+          //         this.$router.push({name: "division"});
+          //       }
+
+          //       localStorage.setItem('token', response.data.token);
+          //     }
+          //     else {
+          //       this.errorMessage = "Invalid username or password";
+          //     }
+          //   } catch (error){
+          //     this.errorMessage = error.response?.data?.message || 'An error occuered';
+          //   }
+          // }
         },
       };
 </script>

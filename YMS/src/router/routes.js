@@ -1,4 +1,5 @@
 import DashboardLayout from "@/layout/dashboard/DashboardLayout.vue";
+import DriverPageLayout from "@/layout/driver/DriverPageLayout.vue";
 // GeneralViews
 import NotFound from "@/pages/NotFoundPage.vue";
 
@@ -14,6 +15,7 @@ import TransportLog from "@/pages/TransportLog.vue";
 import Yard1 from "@/pages/Yard/Yard1.vue"
 import Yard2 from "@/pages/Yard/Yard2.vue"
 import Yard3 from "@/pages/Yard/Yard3.vue"
+import DriverProfile from "@/pages/DriverProfile.vue";
 
 const routes = [
   {
@@ -66,7 +68,29 @@ const routes = [
         name: "icons",
         component: Icons,
       },
+      // {
+      //   path: "profile",
+      //   name: "driverprofile",
+      //   component: DriverProfile,
+      // }
     ],
+  },
+  {
+    path: "/driver",
+    component: DriverPageLayout,
+    redirect: "/driver/profile",
+    children: [
+      {
+        path: "profile",
+        name: "driverprofile",
+        component: DriverProfile,
+      },
+    ]
+  },
+  {
+    path: "driverprofile",
+    name: "driverprofile",
+    component: DriverProfile,
   },
   { path: "*", component: NotFound },
 ];

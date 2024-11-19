@@ -2,12 +2,9 @@
   <div class="wrapper">
     <side-bar>
       <template slot="links">
-        <sidebar-link to="/division" name="Division" icon="ti-map-alt" />
-        <sidebar-link to="/transportlog" name="Transport Log" icon="ti-receipt" />
-        <sidebar-link to="/driverprofiles" name="Driver Profiles" icon="ti-id-badge" />
-        <sidebar-link to="/dashboard" name="Dashboard" icon="ti-panel" />
-        <sidebar-link to="/icons" name="Icons" icon="ti-pencil-alt2" />
-        <!-- <sidebar-link to="/profile" name="Profile" icon="ti-pencil-alt2" /> -->
+        <sidebar-link to="/driver/profile" name="Profile" icon="ti-map-alt" />
+        <!-- <sidebar-link to="/transportlog" name="Transport Log" icon="ti-receipt" />
+        <sidebar-link to="/driverprofiles" name="Driver Profiles" icon="ti-id-badge" /> -->
       </template>
       <mobile-menu>
         <li class="nav-item">
@@ -49,13 +46,11 @@
 <style lang="scss"></style>
 <script>
 import TopNavbar from "./TopNavbar.vue";
-import ContentFooter from "./ContentFooter.vue";
 import DashboardContent from "./Content.vue";
 import MobileMenu from "./MobileMenu";
 export default {
   components: {
     TopNavbar,
-    ContentFooter,
     DashboardContent,
     MobileMenu,
   },
