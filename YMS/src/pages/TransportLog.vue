@@ -2,26 +2,38 @@
 <template>
   <div class="transport-log">
     <h2>Transport Log</h2>
-    <p>Details of all transport activities are listed below.</p>
+    <p>View transport log details below:</p>
 
-    <!-- 로그 테이블 -->
+    <!-- Transport Log Table -->
     <table class="log-table">
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Driver</th>
-          <th>Vehicle</th>
-          <th>Status</th>
-          <th>Distance (km)</th>
+          <th>Log ID</th>
+          <th>Driver ID</th>
+          <th>Container ID</th>
+          <th>Chassis ID</th>
+          <th>Truck ID</th>
+          <th>Trailer ID</th>
+          <th>Depart Zone</th>
+          <th>Depart Date</th>
+          <th>Arrive Zone</th>
+          <th>Arrive Date</th>
+          <th>Log Memo</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="log in transportLogs" :key="log.id">
-          <td>{{ log.date }}</td>
-          <td>{{ log.driver }}</td>
-          <td>{{ log.vehicle }}</td>
-          <td :class="log.status.toLowerCase()">{{ log.status }}</td>
-          <td>{{ log.distance }}</td>
+        <tr v-for="log in logs" :key="log.Log_ID">
+          <td>{{ log.Log_ID }}</td>
+          <td>{{ log.Driver_ID }}</td>
+          <td>{{ log.Container_ID }}</td>
+          <td>{{ log.Chassis_ID }}</td>
+          <td>{{ log.Truck_ID }}</td>
+          <td>{{ log.Trailer_ID }}</td>
+          <td>{{ log.Depart_Zone_ID }}</td>
+          <td>{{ log.Depart_Date }}</td>
+          <td>{{ log.Arrive_Zone_ID }}</td>
+          <td>{{ log.Arrive_Date }}</td>
+          <td>{{ log.Log_memo }}</td>
         </tr>
       </tbody>
     </table>
@@ -33,32 +45,34 @@ export default {
   name: "TransportLog",
   data() {
     return {
-      transportLogs: [
+      logs: [
         {
-          id: 1,
-          date: "2024-11-12",
-          driver: "John Doe",
-          vehicle: "Truck 23",
-          status: "Completed",
-          distance: 150,
+          Log_ID: "L001",
+          Driver_ID: "D001",
+          Container_ID: "C001",
+          Chassis_ID: "CH001",
+          Truck_ID: "T001",
+          Trailer_ID: "TR001",
+          Depart_Zone_ID: "Z001",
+          Depart_Date: "2024-01-01 08:00",
+          Arrive_Zone_ID: "Z002",
+          Arrive_Date: "2024-01-01 12:00",
+          Log_memo: "Delivered on time",
         },
         {
-          id: 2,
-          date: "2024-11-11",
-          driver: "Jane Smith",
-          vehicle: "Van 45",
-          status: "In Progress",
-          distance: 75,
+          Log_ID: "L002",
+          Driver_ID: "D002",
+          Container_ID: "C002",
+          Chassis_ID: "CH002",
+          Truck_ID: "T002",
+          Trailer_ID: "TR002",
+          Depart_Zone_ID: "Z003",
+          Depart_Date: "2024-01-02 09:30",
+          Arrive_Zone_ID: "Z004",
+          Arrive_Date: "2024-01-02 15:00",
+          Log_memo: "Delayed due to traffic",
         },
-        {
-          id: 3,
-          date: "2024-11-10",
-          driver: "Alice Johnson",
-          vehicle: "Truck 34",
-          status: "Delayed",
-          distance: 120,
-        },
-        // 더 많은 데이터 추가 가능
+        // 추가 로그 데이터를 여기에 계속 추가할 수 있습니다.
       ],
     };
   },
@@ -68,9 +82,6 @@ export default {
 <style scoped>
 .transport-log {
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 h2 {
@@ -85,44 +96,29 @@ p {
   margin-bottom: 20px;
 }
 
-/* 로그 테이블 스타일 */
 .log-table {
   width: 100%;
-  max-width: 800px;
   border-collapse: collapse;
-  text-align: left;
-  margin-top: 20px;
-  font-size: 1rem;
-}
-
-.log-table thead {
-  background-color: #f1f1f1;
 }
 
 .log-table th,
 .log-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #ddd;
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
 }
 
 .log-table th {
-  font-weight: bold;
+  background-color: #f8f9fa;
   color: #333;
+  font-weight: bold;
+}
+
+.log-table tr:nth-child(even) {
+  background-color: #f2f2f2;
 }
 
 .log-table tr:hover {
-  background-color: #f9f9f9;
-}
-
-.log-table .completed {
-  color: #28a745; /* 초록색 (완료) */
-}
-
-.log-table .in-progress {
-  color: #ffc107; /* 노란색 (진행 중) */
-}
-
-.log-table .delayed {
-  color: #dc3545; /* 빨간색 (지연) */
+  background-color: #e9ecef;
 }
 </style>
