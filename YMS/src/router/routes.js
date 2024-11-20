@@ -1,5 +1,8 @@
 import DashboardLayout from "@/layout/dashboard/DashboardLayout.vue";
+
+// Driver Page 
 import DriverPageLayout from "@/layout/driver/DriverPageLayout.vue";
+
 // GeneralViews
 import NotFound from "@/pages/NotFoundPage.vue";
 
@@ -16,6 +19,7 @@ import Yard1 from "@/pages/Yard/Yard1.vue";
 import Yard2 from "@/pages/Yard/Yard2.vue";
 import Yard3 from "@/pages/Yard/Yard3.vue";
 import AssignedManagement from "@/pages/AssignedManagement.vue";
+import DriverProfile from "../pages/DriverAccount/DriverProfile.vue";
 
 const routes = [
   {
@@ -29,7 +33,7 @@ const routes = [
     redirect: "/division",
     children: [
       {
-        path: "/division",
+        path: "division",
         name: "division",
         component: DivisionPage,
       },
@@ -74,6 +78,18 @@ const routes = [
         component: AssignedManagement,
       },
     ],
+  },
+  {
+    path: '/driver', // Base path for DriverPageLayout
+    component: DriverPageLayout,
+    redirect: '/driver/profile',
+    children: [ 
+      {
+        path: 'profile', // Nested path (e.g., /driver/profile)
+        name: 'DriverProfile',
+        component: DriverProfile
+      },
+    ]
   },
   { path: "*", component: NotFound },
 ];
