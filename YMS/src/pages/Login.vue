@@ -53,7 +53,7 @@
               this.$router.push({name: "division"}); // 관리자 페이지로 이동
             } else if (this.role === "driver" && this.username === "driver001" && this.password === "1234") {
               localStorage.setItem("loggedIn", "true");
-              this.$router.push({name: "DriverProfile"});  // 드라이버 페이지로 이동
+              this.$router.push({name: "DriverDashboard"});  // 드라이버 페이지로 이동
             } else {
               this.errorMessage = "Invalid username or password.";
             }

@@ -1,53 +1,43 @@
 <template>
-    <div class="dashboard">
-      <!-- Header Section -->
-      <div class="header">
-        <h1>Welcome, {{ driver.name }}!</h1>
-        <p class="status">
-          Current Status: 
-          <span :class="statusClass">{{ driver.status }}</span>
-        </p>
-        <button @click="toggleStatus">{{ toggleStatusText }}</button>
-      </div>
-  
-      <!-- Metrics Section -->
-      <div class="metrics">
-        <div class="card" v-for="metric in metrics" :key="metric.label">
-          <h3>{{ metric.value }}</h3>
-          <p>{{ metric.label }}</p>
-        </div>
-      </div>
-  
-      <!-- Upcoming Trip Section -->
-      <div class="upcoming-trip">
-        <h2>Upcoming Trip</h2>
-        <div v-if="upcomingTrip">
-          <p><strong>Pickup:</strong> {{ upcomingTrip.pickup }}</p>
-          <p><strong>Drop-off:</strong> {{ upcomingTrip.dropoff }}</p>
-          <p><strong>Time:</strong> {{ upcomingTrip.time }}</p>
-        </div>
-        <div v-else>
-          <p>No upcoming trips scheduled.</p>
-        </div>
-      </div>
-  
-      <!-- Map Section -->
-      <div class="map">
-        <h2>Current Location</h2>
-        <div id="map-container"></div>
-      </div>
-  
-      <!-- Notifications Section -->
-      <div class="notifications">
-        <h2>Notifications</h2>
-        <ul>
-          <li v-for="notification in notifications" :key="notification.id">
-            {{ notification.message }}
-          </li>
-        </ul>
+  <div class="dashboard">
+    <!-- Header Section -->
+    <div class="header">
+      <h1>Welcome, {{ driver.name }}!</h1>
+      <p class="status">
+        Current Status:
+        <span :class="statusClass">{{ driver.status }}</span>
+      </p>
+        <button class="status-button" @click="changeStatus">{{ toggleStatusText }}</button>
+    </div>
+
+    <!-- Metrics Section -->
+    <div class="metrics">
+      <div class="card" v-for="metric in metrics" :key="metric.label">
+        <h3>{{ metric.value }}</h3>
+        <p>{{ metric.label }}</p>
       </div>
     </div>
-  </template>
+
+    <!-- Upcoming Trip Section -->
+    <div class="upcoming-trip">
+      <h2>Upcoming Trip</h2>
+      <div v-if="upcomingTrip">
+        <p><strong>Pickup:</strong> {{ upcomingTrip.pickup }}</p>
+        <p><strong>Drop-off:</strong> {{ upcomingTrip.dropoff }}</p>
+        <p><strong>Time:</strong> {{ upcomingTrip.time }}</p>
+      </div>
+      <div v-else>
+        <p>No upcoming trips scheduled.</p>
+      </div>
+    </div>
+
+    <!-- Map Section -->
+    <div class="map">
+      <h2>Current Location</h2>
+      <div id="map-container"></div>
+    </div>
+  </div>
+</template>
 
 <script>
 export default {
@@ -55,16 +45,21 @@ export default {
     return {
       driver: {
         name: "John Doe",
-        status: "Available", // Status: Available, On a Trip, Offline
+        status: "Available", // Default status
+        statuses: [
+          { status: "Available" },
+          { status: "On a Trip" },
+          { status: "Offline" },
+        ],
       },
       metrics: [
-        { label: "Trips Completed", value: 120 },
-        { label: "Earnings (This Month)", value: "$1,200" },
-        { label: "Average Rating", value: "4.8" },
+        { label: "Trips completed", value: 120 },
+        { label: "Earnings (This Month)", value: "$19,000" },
+        { label: "Average Rating", value: 4.8 },
       ],
       upcomingTrip: {
         pickup: "123 Elm Street",
-        dropoff: "456 Oak Avenue",
+        dropoff: "426 Oak Avenue",
         time: "Tomorrow, 10:00 AM",
       },
       notifications: [
@@ -75,6 +70,7 @@ export default {
   },
   computed: {
     statusClass() {
+      // Dynamically assign classes based on driver status
       return {
         available: this.driver.status === "Available",
         "on-trip": this.driver.status === "On a Trip",
@@ -82,27 +78,29 @@ export default {
       };
     },
     toggleStatusText() {
+      // Change button text based on driver status
       return this.driver.status === "Available" ? "Go Offline" : "Go Online";
     },
   },
   methods: {
-    toggleStatus() {
+    changeStatus() {
+      // Toggle driver status between Available and Offline
       this.driver.status =
         this.driver.status === "Available" ? "Offline" : "Available";
+      console.log("Status changed:", this.driver.status);
+    },
+    initializeMap() {
+      // Add map initialization logic here
+      console.log("Initialize map with driver location.");
     },
   },
   mounted() {
     // Initialize the map or fetch live location
     this.initializeMap();
   },
-  methods: {
-    initializeMap() {
-      // Add map logic here (e.g., using Leaflet.js or Google Maps)
-      console.log("Initialize map with driver location.");
-    },
-  },
 };
 </script>
+
 
 <style scoped>
 .dashboard {
@@ -136,10 +134,16 @@ export default {
   color: red;
 }
 
+/* Metrics status */
 .metrics {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
+  cursor: pointer;
+}
+.metrics:hover{
+  transform: scale(1.1); /* Slightly increase size on hover */
+
 }
 
 .card {
@@ -152,9 +156,63 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.upcoming-trip,
-.map,
-.notifications {
+/* Upcoming Trip */
+.upcoming-trip {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.upcoming-trip h2 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #333;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  text-transform: uppercase;
+}
+
+.upcoming-trip p {
+  font-size: 16px;
+  margin: 5px 0;
+  line-height: 1.5;
+  color: #555;
+}
+
+.upcoming-trip strong {
+  color: #333;
+}
+
+.upcoming-trip:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.upcoming-trip div {
+  padding: 10px 0;
+}
+
+/* Add animation to "No upcoming trips scheduled" */
+.upcoming-trip p {
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map{
   margin-bottom: 20px;
   padding: 20px;
   border: 1px solid #ddd;
@@ -166,15 +224,39 @@ export default {
   background: #eee;
 }
 
-.notifications ul {
-  list-style: none;
-  padding: 0;
+/* Change Status Button Style */
+.status-button {
+  padding: 10px 20px;
+  background-color:azure;
+  border: rgb(from background-color);
+  border-radius: 5px;
+  font-size: 16px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.5s ease;
+  font-family: sans-serif;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 
-.notifications li {
-  margin: 5px 0;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 5px;
+.status-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: rgb(53, 198, 53);
+  transition: 0.2s;
+  z-index: -1;
+}
+
+.status-button:hover::before {
+  width: 100%;
+  transform:scale(1.1)
+}
+.status-button:hover{
+  transform:scale(1.1)
 }
 </style>

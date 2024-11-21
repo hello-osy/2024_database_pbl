@@ -84,7 +84,7 @@ const routes = [
   {
     path: '/driver', // Base path for DriverPageLayout
     component: DriverPageLayout,
-    redirect: '/driver/profile',
+    redirect: '/driver/dashboard',
     children: [ 
       {
         path: 'profile', // Nested path (e.g., /driver/profile)

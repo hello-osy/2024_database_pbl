@@ -48,11 +48,14 @@
 import TopNavbar from "./TopNavbar.vue";
 import DashboardContent from "./Content.vue";
 import MobileMenu from "./MobileMenu";
+import ContentFooter from "./ContentFooter.vue";
+
 export default {
   components: {
     TopNavbar,
     DashboardContent,
     MobileMenu,
+    ContentFooter
   },
   methods: {
     toggleSidebar() {
