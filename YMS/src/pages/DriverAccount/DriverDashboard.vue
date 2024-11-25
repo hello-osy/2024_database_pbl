@@ -224,39 +224,18 @@ export default {
   background: #eee;
 }
 
-/* Change Status Button Style */
-.status-button {
-  padding: 10px 20px;
-  background-color:azure;
-  border: rgb(from background-color);
-  border-radius: 5px;
-  font-size: 16px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: transform 0.5s ease;
-  font-family: sans-serif;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-}
+  button {
+      width: 200px;
+      padding: 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+  }
 
-.status-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 100%;
-  background: rgb(53, 198, 53);
-  transition: 0.2s;
-  z-index: -1;
-}
-
-.status-button:hover::before {
-  width: 100%;
-  transform:scale(1.1)
-}
-.status-button:hover{
-  transform:scale(1.1)
-}
+  button:hover {
+      background-color: #45a049;
+  }
 </style>

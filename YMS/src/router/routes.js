@@ -19,9 +19,12 @@ import Yard1 from "@/pages/Yard/Yard1.vue";
 import Yard2 from "@/pages/Yard/Yard2.vue";
 import Yard3 from "@/pages/Yard/Yard3.vue";
 import AssignedManagement from "@/pages/AssignedManagement.vue";
+
+// Driver pages
 import DriverProfile from "../pages/DriverAccount/DriverProfile.vue";
 import DriverDashboard from "../pages/DriverAccount/DriverDashboard.vue";
 import DriverSchedule from "../pages/DriverAccount/DriverSchedule.vue";
+import EditProfile from "../pages/DriverAccount/EditProfile.vue";
 
 const routes = [
   {
@@ -100,6 +103,11 @@ const routes = [
         path: 'schedules',
         name: 'DriverSchedule',
         component: DriverSchedule
+      },
+      {
+        path: 'edit-profile',
+        name: 'EditProfile',
+        component: EditProfile
       }
     ]
   },

@@ -136,10 +136,65 @@ export default {
 .list-view li {
   margin: 10px 0;
   padding: 10px;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-radius: 5px;
 }
 
+/* Upcoming Trip */
+.content {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.content h2 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #333;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  text-transform: uppercase;
+}
+
+.content p {
+  font-size: 16px;
+  margin: 5px 0;
+  line-height: 1.5;
+  color: #555;
+}
+
+.content strong {
+  color: #333;
+}
+
+.content:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.content div {
+  padding: 10px 0;
+}
+
+/* Add animation to "No upcoming trips scheduled" */
+.content p {
+  animation: fadeIn 1s ease-in-out;
+}
+/* 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} */
 
 </style>
 
