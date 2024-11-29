@@ -1,53 +1,81 @@
 <template>
-    <div class="schedule-page">
-      <!-- Header Section -->
-      <div class="header">
-        <h1>My Schedule</h1>
-        <div class="view-toggle">
-          <button :class="{ active: view === 'list' }" @click="view = 'list'">List View</button>
-          <button :class="{ active: view === 'calendar' }" @click="view = 'calendar'">Calendar View</button>
+  <div class="schedule-page">
+    <!-- Header Section -->
+    <div class="header">
+      <h1>My Schedule</h1>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters">
+      <select v-model="filterStatus">
+        <option value="all">All</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <!-- New Trips -->
+      <div class="schedule-section" v-if="newTrips.length">
+        <h2>New Trips</h2>
+        <div class="trip" v-for="trip in newTrips" :key="trip.id">
+          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
+          <p><strong>Date:</strong> {{ trip.date }}</p>
+          <p><strong>Time:</strong> {{ trip.time }}</p>
+          <div class="action-buttons">
+            <button @click="acceptTrip(trip.id)">Accept</button>
+            <button class="decline-button" @click="declineTrip(trip.id)">Decline</button>
+          </div>
         </div>
       </div>
-  
-      <!-- Filters Section -->
-      <div class="filters">
-        <select v-model="filterStatus">
-          <option value="all">All</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+
+      <!-- Upcoming Trips -->
+      <div class="schedule-section" v-if="filteredTripsByStatus.upcoming.length">
+        <h2>Upcoming Trips</h2>
+        <div class="trip" v-for="trip in filteredTripsByStatus.upcoming" :key="trip.id">
+          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
+          <p><strong>Date:</strong> {{ trip.date }}</p>
+          <p><strong>Time:</strong> {{ trip.time }}</p>
+          <button @click="markCompleted(trip.id)">Mark as Completed</button>
+        </div>
       </div>
-  
-      <!-- Main Content -->
-      <div class="content">
-        <!-- List View -->
-        <div v-if="view === 'list'" class="list-view">
-          <ul>
-            <li v-for="trip in filteredTrips" :key="trip.id">
-              <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
-              <p>Date: {{ trip.date }}</p>
-              <p>Status: {{ trip.status }}</p>
-              <button v-if="trip.status === 'upcoming'" @click="markCompleted(trip.id)">Mark as Completed</button>
-            </li>
-          </ul>
+
+      <!-- Completed Trips -->
+      <div class="schedule-section" v-if="filteredTripsByStatus.completed.length">
+        <h2>Completed Trips</h2>
+        <div class="trip" v-for="trip in filteredTripsByStatus.completed" :key="trip.id">
+          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
+          <p><strong>Date:</strong> {{ trip.date }}</p>
+          <p><strong>Time:</strong> {{ trip.time }}</p>
+          <p class="status-label">Completed</p>
         </div>
-  
-        <!-- Calendar View -->
-        <div v-if="view === 'calendar'" class="calendar-view">
-          <calendar :events="trips" />
+      </div>
+
+      <!-- Cancelled Trips -->
+      <div class="schedule-section" v-if="filteredTripsByStatus.cancelled.length">
+        <h2>Cancelled Trips</h2>
+        <div class="trip" v-for="trip in filteredTripsByStatus.cancelled" :key="trip.id">
+          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
+          <p><strong>Date:</strong> {{ trip.date }}</p>
+          <p><strong>Time:</strong> {{ trip.time }}</p>
+          <p class="status-label">Cancelled</p>
         </div>
+      </div>
+
+      <!-- No Trips Message -->
+      <div v-if="!filteredTrips.length" class="no-trips">
+        <p>No trips to show.</p>
       </div>
     </div>
+  </div>
 </template>
 
 <script>
-
-
 export default {
   data() {
     return {
-      view: "list", // Default view: list or calendar
       filterStatus: "all", // Default filter
       trips: [
         {
@@ -75,6 +103,15 @@ export default {
           status: "cancelled",
         },
       ],
+      newTrips: [
+        {
+          id: 4,
+          pickup: "Location G",
+          dropoff: "Location H",
+          date: "2024-11-25",
+          time: "9:00 AM",
+        },
+      ], // Store new trips assigned by the manager
     };
   },
   computed: {
@@ -84,6 +121,13 @@ export default {
       }
       return this.trips.filter((trip) => trip.status === this.filterStatus);
     },
+    filteredTripsByStatus() {
+      return {
+        upcoming: this.trips.filter((trip) => trip.status === "upcoming"),
+        completed: this.trips.filter((trip) => trip.status === "completed"),
+        cancelled: this.trips.filter((trip) => trip.status === "cancelled"),
+      };
+    },
   },
   methods: {
     markCompleted(tripId) {
@@ -92,110 +136,166 @@ export default {
         trip.status = "completed";
       }
     },
+    acceptTrip(tripId) {
+      const tripIndex = this.newTrips.findIndex((t) => t.id === tripId);
+      if (tripIndex !== -1) {
+        const trip = this.newTrips.splice(tripIndex, 1)[0];
+        trip.status = "upcoming";
+        this.trips.push(trip);
+      }
+    },
+    declineTrip(tripId) {
+      this.newTrips = this.newTrips.filter((t) => t.id !== tripId);
+    },
   },
 };
 </script>
 
-
 <style scoped>
+/* General Styles */
 .schedule-page {
   padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  min-height: 100vh;
 }
 
 .header {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 24px;
+  color: #333;
+}
+
+/* Filters Section */
+.filters {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.filters select {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  background-color: #fff;
+  width: 200px;
+  transition: border-color 0.3s ease;
+}
+
+.filters select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Schedule Section */
+.schedule-section {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-section h2 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.trip {
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.view-toggle button {
-  margin: 0 5px;
-  padding: 10px 15px;
-  border: none;
-  cursor: pointer;
+.trip:last-child {
+  border-bottom: none;
 }
 
-.view-toggle button.active {
-  background-color: #007bff;
-  color: white;
-}
-
-.filters {
-  margin: 15px 0;
-}
-
-.filters select {
-  padding: 10px;
-}
-
-.list-view ul {
-  list-style: none;
-  padding: 0;
-}
-
-.list-view li {
-  margin: 10px 0;
-  padding: 10px;
-  /* border: 1px solid #ddd; */
-  border-radius: 5px;
-}
-
-/* Upcoming Trip */
-.content {
-  margin-bottom: 20px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.content h2 {
-  font-size: 20px;
-  margin-bottom: 15px;
-  color: #333;
-  text-align: center;
-  font-family: 'Arial', sans-serif;
-  text-transform: uppercase;
-}
-
-.content p {
+.trip h3 {
   font-size: 16px;
-  margin: 5px 0;
-  line-height: 1.5;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+.trip p {
+  margin: 3px 0;
+  font-size: 14px;
   color: #555;
 }
 
-.content strong {
-  color: #333;
+/* No Trips Message */
+.no-trips {
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+  margin-top: 20px;
 }
 
-.content:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
 }
 
-.content div {
-  padding: 10px 0;
+button {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Add animation to "No upcoming trips scheduled" */
-.content p {
-  animation: fadeIn 1s ease-in-out;
+button:hover {
+  transform: translateY(-2px);
 }
-/* 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-} */
+
+/* Accept Button */
+button {
+  background-color: #4caf50;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+/* Decline Button */
+button.decline-button {
+  background-color: #f44336;
+}
+
+button.decline-button:hover {
+  background-color: #e53935;
+}
+
+/* Completed and Cancelled Status Labels */
+.status-label {
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: white;
+  display: inline-block;
+}
+
+.status-label.completed {
+  background-color: #4caf50;
+}
+
+.status-label.cancelled {
+  background-color: #f44336;
+}
 
 </style>
-
-

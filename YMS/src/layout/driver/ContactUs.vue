@@ -1,6 +1,6 @@
 <template>
-    <div class="background" @click.self="closeContactBox">
-        <div class="contactBox">
+    <div class="background">
+        <div class="contactBox" @click.self="closeContactBox">
             <slot> Default Information </slot>
             <p>Type here the problem</p>
             <input type="text">

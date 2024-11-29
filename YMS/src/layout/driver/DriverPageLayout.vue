@@ -1,68 +1,45 @@
 <template>
   <div class="wrapper">
-    <side-bar>
-      <template slot="links">
-        <sidebar-link to="/driver/profile" name="Profile" icon="ti-map-alt" />
-        <!-- <sidebar-link to="/transportlog" name="Transport Log" icon="ti-receipt" />
-        <sidebar-link to="/driverprofiles" name="Driver Profiles" icon="ti-id-badge" /> -->
-      </template>
-      <mobile-menu>
-        <li class="nav-item">
-          <a class="nav-link">
-            <i class="ti-panel"></i>
-            <p>Stats</p>
-          </a>
-        </li>
-        <drop-down
-          class="nav-item"
-          title="5 Notifications"
-          title-classes="nav-link"
-          icon="ti-bell"
-        >
-          <a class="dropdown-item">Notification 1</a>
-          <a class="dropdown-item">Notification 2</a>
-          <a class="dropdown-item">Notification 3</a>
-          <a class="dropdown-item">Notification 4</a>
-          <a class="dropdown-item">Another notification</a>
-        </drop-down>
-        <li class="nav-item">
-          <a class="nav-link">
-            <i class="ti-settings"></i>
-            <p>Settings</p>
-          </a>
-        </li>
-        <li class="divider"></li>
-      </mobile-menu>
-    </side-bar>
+    <!-- 새로운 SideBarDriver 컴포넌트를 추가 -->
+    <side-bar-driver />
     <div class="main-panel">
       <top-navbar></top-navbar>
 
-      <dashboard-content @click.native="toggleSidebar"> </dashboard-content>
+      <dashboard-content> </dashboard-content>
 
       <content-footer></content-footer>
     </div>
   </div>
 </template>
-<style lang="scss"></style>
+
 <script>
 import TopNavbar from "./TopNavbar.vue";
 import DashboardContent from "./Content.vue";
-import MobileMenu from "./MobileMenu";
 import ContentFooter from "./ContentFooter.vue";
+import SideBarDriver from "./SideBar_driver.vue"; // 새로운 사이드바 컴포넌트 추가
 
 export default {
   components: {
     TopNavbar,
     DashboardContent,
-    MobileMenu,
-    ContentFooter
-  },
-  methods: {
-    toggleSidebar() {
-      if (this.$sidebar.showSidebar) {
-        this.$sidebar.displaySidebar(false);
-      }
-    },
+    ContentFooter,
+    SideBarDriver,
   },
 };
 </script>
+
+<style scoped>
+.wrapper {
+  display: flex;
+  height: 100vh;
+}
+
+.main-panel {
+  flex: 1;
+  overflow-y: auto; /* 스크롤 가능 */
+}
+
+.sidebar-driver {
+  flex-shrink: 0;
+}
+</style>

@@ -2,21 +2,52 @@
   <div class="dashboard">
     <!-- Header Section -->
     <div class="header">
-      <h1>Welcome, {{ driver.name }}!</h1>
-      <p class="status">
-        Current Status:
-        <span :class="statusClass">{{ driver.status }}</span>
-      </p>
-        <button class="status-button" @click="changeStatus">{{ toggleStatusText }}</button>
-    </div>
+  <h1>Welcome, {{ driver.name }}!</h1>
+  <p class="status">
+    Current Status: <span :class="statusClass">{{ driver.status }}</span>
+  </p>
+  <div class="status-buttons">
+    <button
+      class="status-button available"
+      :disabled="driver.status === 'Available'"
+      @click="updateStatus('Available')"
+    >
+      Available
+    </button>
+    <button
+      class="status-button on-trip"
+      :disabled="driver.status === 'On a Trip'"
+      @click="updateStatus('On a Trip')"
+    >
+      On Trip
+    </button>
+    <button
+      class="status-button offline"
+      :disabled="driver.status === 'Offline'"
+      @click="updateStatus('Offline')"
+    >
+      Offline
+    </button>
+  </div>
+</div>
+
 
     <!-- Metrics Section -->
     <div class="metrics">
-      <div class="card" v-for="metric in metrics" :key="metric.label">
-        <h3>{{ metric.value }}</h3>
-        <p>{{ metric.label }}</p>
+      <div class="metric-box">
+        <h3>{{ metrics[0].value }}</h3>
+        <p>{{ metrics[0].label }}</p>
+      </div>
+      <div class="metric-box">
+        <h3>{{ metrics[1].value }}</h3>
+        <p>{{ metrics[1].label }}</p>
+      </div>
+      <div class="metric-box">
+        <h3>{{ metrics[2].value }}</h3>
+        <p>{{ metrics[2].label }}</p>
       </div>
     </div>
+
 
     <!-- Upcoming Trip Section -->
     <div class="upcoming-trip">
@@ -29,12 +60,6 @@
       <div v-else>
         <p>No upcoming trips scheduled.</p>
       </div>
-    </div>
-
-    <!-- Map Section -->
-    <div class="map">
-      <h2>Current Location</h2>
-      <div id="map-container"></div>
     </div>
   </div>
 </template>
@@ -93,6 +118,10 @@ export default {
       // Add map initialization logic here
       console.log("Initialize map with driver location.");
     },
+    updateStatus(newStatus) {
+    this.driver.status = newStatus;
+    console.log("Driver status updated to:", newStatus);
+  },
   },
   mounted() {
     // Initialize the map or fetch live location
@@ -134,26 +163,40 @@ export default {
   color: red;
 }
 
-/* Metrics status */
+/* Metrics Section */
 .metrics {
-  display: flex;
-  justify-content: space-between;
+  display: flex; /* Arrange boxes in a row */
+  justify-content: space-between; /* Add space between boxes */
+  gap: 20px; /* Space between each box */
   margin-bottom: 20px;
+}
+
+.metric-box {
+  flex: 1; /* Allow boxes to take equal width */
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
 }
-.metrics:hover{
-  transform: scale(1.1); /* Slightly increase size on hover */
 
+.metric-box h3 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
 }
 
-.card {
-  flex: 1;
-  background: #f8f9fa;
-  padding: 20px;
-  text-align: center;
-  margin: 0 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.metric-box p {
+  font-size: 16px;
+  color: #555;
+}
+
+.metric-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Upcoming Trip */
@@ -212,30 +255,37 @@ export default {
   }
 }
 
-.map{
-  margin-bottom: 20px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+.status-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.map #map-container {
-  height: 300px;
-  background: #eee;
+.status-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.3s ease;
 }
 
-  button {
-      width: 200px;
-      padding: 15px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 18px;
-  }
+.status-button.available {
+  background-color: green;
+}
 
-  button:hover {
-      background-color: #45a049;
-  }
+.status-button.on-trip {
+  background-color: orange;
+}
+
+.status-button.offline {
+  background-color: red;
+}
+
+.status-button:disabled {
+  background-color: gray;
+  cursor: not-allowed;
+}
 </style>
