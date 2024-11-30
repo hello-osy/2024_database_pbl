@@ -32,15 +32,15 @@ export default {
   },
   mounted() {
     // Google Maps API 스크립트 로드
-    if (!window.google) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHFKEJ_NU8CbNjFOtOgE4A73cv2phjkpo&callback=initMap`;
-      script.async = true;
-      window.initMap = this.initMap;
-      document.head.appendChild(script);
-    } else {
-      this.initMap();
-    }
+    // if (!window.google) {
+    //   const script = document.createElement("script");
+    //   script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHFKEJ_NU8CbNjFOtOgE4A73cv2phjkpo&callback=initMap`;
+    //   script.async = true;
+    //   window.initMap = this.initMap;
+    //   document.head.appendChild(script);
+    // } else {
+    //   this.initMap();
+    // }
   },
   methods: {
     initMap() {

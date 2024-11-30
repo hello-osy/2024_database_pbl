@@ -1,14 +1,13 @@
 <template>
   <div class="wrapper">
-    <side-bar>
-      <template slot="links">
-        <sidebar-link to="/division" name="Division" icon="ti-map-alt" />
-        <sidebar-link to="/transportlog" name="Transport Log" icon="ti-receipt" />
-        <sidebar-link to="/driverprofiles" name="Driver Profiles" icon="ti-id-badge" />
-        <sidebar-link to="/dashboard" name="Dashboard" icon="ti-panel" />
-        <sidebar-link to="/icons" name="Icons" icon="ti-pencil-alt2" />
-        <!-- <sidebar-link to="/profile" name="Profile" icon="ti-pencil-alt2" /> -->
-      </template>
+    <side-bar :sidebarLinks="links">
+      <!-- <template slot="links">
+        <sidebar-link :to="{name: 'division'}" name="Division" icon="ti-map-alt" />
+        <sidebar-link :to="{name: 'transportlog'}" name="Transport Log" icon="ti-receipt" />
+        <sidebar-link :to="{name: 'driverprofiles'}" name="Driver Profiles" icon="ti-id-badge" />
+        <sidebar-link :to="{name: 'dashboard'}" name="Dashboard" icon="ti-panel" />
+        <sidebar-link :to="{name: 'yard1'}" name="Icons" icon="ti-pencil-alt2" />
+      </template> -->
       <mobile-menu>
         <li class="nav-item">
           <a class="nav-link">
@@ -46,18 +45,32 @@
     </div>
   </div>
 </template>
-
-
 <style lang="scss"></style>
 <script>
 import TopNavbar from "./TopNavbar.vue";
-import ContentFooter from "./ContentFooter.vue";
+// import ContentFooter from "./ContentFooter.vue";
 import DashboardContent from "./Content.vue";
 import MobileMenu from "./MobileMenu";
+import AssignedManagement from "../../pages/Admin/AssignedManagement.vue";
 export default {
+  data() {
+    return {
+      links: [
+        { path: '/admin/dashboard', name: 'Dashboard', icon: 'ti-panel', 
+          children: [
+            { path: '/admin/yard1', name: 'Yard1'},
+            { path: '/admin/yard2', name: 'Yard2'}
+          ]
+         },
+        { path: '/admin/transportlog', name: 'Transport Log', icon: 'ti-receipt' },
+        { path: '/admin/driverlist', name: 'Driver List', icon: 'ti-id-badge' },
+        { path: '/admin/assignedmanagement', name: 'AssignedManagement', icon: 'ti-truck'}
+      ],
+    }
+  },
   components: {
     TopNavbar,
-    ContentFooter,
+    // ContentFooter,
     DashboardContent,
     MobileMenu,
   },

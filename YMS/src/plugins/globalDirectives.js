@@ -1,3 +1,6 @@
+/**
+ * 글로벌 커스텀 디렉티브 등록
+ */
 import { directive as vClickOutside } from "vue-clickaway";
 
 /**

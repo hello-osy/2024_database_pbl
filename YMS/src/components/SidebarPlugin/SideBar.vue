@@ -4,77 +4,43 @@
     :data-background-color="backgroundColor"
     :data-active-color="activeColor"
   >
+    <!--
+            Tip 1: you can change the color of the sidebar's background using: data-background-color="white | black | darkblue"
+            Tip 2: you can change the color of the active button using the data-active-color="primary | info | success | warning | danger"
+        -->
+    <!-- -->
     <div class="sidebar-wrapper" id="style-3">
-      <!-- 로고 섹션 -->
       <div class="logo">
         <a href="#" class="simple-text">
           <div class="logo-img">
-            <img src="@/assets/img/onepiece_logo.png" alt="" />
+            <img src="@/assets/img/onepiece_logo4.png" alt="" />
           </div>
           {{ title }}
         </a>
       </div>
-
-      <!-- 메뉴 섹션 -->
+      <slot> </slot>
       <ul class="nav">
-        <li class="menu-item has-submenu">
-          <!-- Division 메뉴 -->
-          <sidebar-link to="/division" name="Division" icon="ti-layout-grid3">
-          </sidebar-link>
-          <i
-            :class="divisionMenuOpen ? 'ti-angle-down' : 'ti-angle-right'"
-            class="submenu-icon"
-            @click.stop="toggleDivisionMenu"
-          ></i>
-          <ul v-if="divisionMenuOpen" class="submenu">
-            <li class="submenu-item" v-for="yard in yards" :key="yard.path">
-              <sidebar-link :to="yard.path" :name="yard.name"></sidebar-link>
-            </li>
-          </ul>
-        </li>
-
-        <!-- Transport Log 메뉴 -->
-        <li class="menu-item">
+        <!--By default vue-router adds an active class to each route link. This way the links are colored when clicked-->
+        <slot name="links">
           <sidebar-link
-            to="/transport-log"
-            name="Transport Log"
-            icon="ti-list"
+            v-for="(link, index) in sidebarLinks"
+            :key="index"
+            :to="link.path"
+            :name="link.name"
+            :icon="link.icon"
+            :children="link.children"
           >
           </sidebar-link>
-        </li>
-
-        <!-- Driver Profiles 메뉴 -->
-        <li class="menu-item">
-          <sidebar-link
-            to="/driver-profiles"
-            name="Driver Profiles"
-            icon="ti-user"
-          >
-          </sidebar-link>
-        </li>
-
-        <!-- Assigned Management 메뉴 -->
-        <li class="menu-item">
-          <sidebar-link
-            to="/assigned-management"
-            name="Assigned Management"
-            icon="ti-clipboard"
-          >
-          </sidebar-link>
-        </li>
+        </slot>
       </ul>
-
-      <!-- Moving Arrow 컴포넌트 -->
-      <moving-arrow :move-y="arrowMovePx"></moving-arrow>
+      <moving-arrow :move-y="arrowMovePx"> </moving-arrow>
     </div>
   </div>
 </template>
-
 <script>
 import MovingArrow from "./MovingArrow.vue";
 import SidebarLink from "./SidebarLink";
 export default {
-  name: "SideBar",
   props: {
     title: {
       type: String,
@@ -83,91 +49,91 @@ export default {
     backgroundColor: {
       type: String,
       default: "black",
-      validator: (value) => ["white", "black", "darkblue"].includes(value),
-    },
+      validator: (value) => {
+        let acceptedValues = ["white", "black", "darkblue"];
+        return acceptedValues.indexOf(value) !== -1;
+      },
+    }, // data-background-color를 설정하기 위한 값
     activeColor: {
       type: String,
-      default: "success",
-      validator: (value) =>
-        ["primary", "info", "success", "warning", "danger"].includes(value),
+      default: "info",
+      validator: (value) => {
+        let acceptedValues = [
+          "primary",
+          "info",
+          "success",
+          "warning",
+          "danger",
+        ];
+        return acceptedValues.indexOf(value) !== -1;
+      },
     },
+    sidebarLinks: {
+      type: Array,
+      default: () => [],
+    },
+    autoClose: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  provide() {
+    return {
+      autoClose: this.autoClose,
+      addLink: this.addLink,
+      removeLink: this.removeLink,
+    };
   },
   components: {
     MovingArrow,
     SidebarLink,
   },
-  data() {
-    return {
-      divisionMenuOpen: false, // Division 서브메뉴 상태
-      yards: [
-        { name: "Yard 1", path: "/yard1" },
-        { name: "Yard 2", path: "/yard2" },
-        { name: "Yard 3", path: "/yard3" },
-      ],
-      linkHeight: 65,
-      activeLinkIndex: 0,
-    };
-  },
   computed: {
+    /**
+     * Styles to animate the arrow near the current active sidebar link
+     * @returns {{transform: string}}
+     */
     arrowMovePx() {
       return this.linkHeight * this.activeLinkIndex;
     },
   },
+  data() {
+    return {
+      linkHeight: 65,
+      activeLinkIndex: 0,
+      windowWidth: 0,
+      isWindows: false,
+      hasAutoHeight: false,
+      links: [],
+    };
+  },
   methods: {
-    toggleDivisionMenu() {
-      this.divisionMenuOpen = !this.divisionMenuOpen;
+    findActiveLink() {
+      this.links.forEach((link, index) => {
+        if (link.isActive()) {
+          this.activeLinkIndex = index;
+        }
+      });
     },
+    addLink(link) {
+      const index = this.$slots.links.indexOf(link.$vnode);
+      this.links.splice(index, 0, link);
+    },
+    removeLink(link) {
+      const index = this.links.indexOf(link);
+      if (index > -1) {
+        this.links.splice(index, 1);
+      }
+    },
+  },
+  mounted() {
+    this.$watch("$route", this.findActiveLink, {
+      immediate: true,
+    });
+    console.log("sidebar.vue - sidebarlinks:", this.sidebarLinks)
+    console.log("SidebarLink.vue - name:", this.name)
+    console.log("SidebarLink.vue - icon:", this.icon)
   },
 };
 </script>
-
-<style scoped>
-.sidebar {
-  width: 250px;
-  background-color: var(--sidebar-bg-color, #343a40);
-  color: var(--sidebar-text-color, #fff);
-  height: 100vh;
-  position: fixed;
-  padding-top: 20px;
-}
-
-.nav {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-
-.menu-item {
-  padding: 15px 20px;
-  position: relative;
-}
-
-.submenu-icon {
-  font-size: 0.9rem;
-  cursor: pointer;
-  position: absolute;
-  right: 15px;
-  top: 18px;
-  transition: transform 0.3s;
-}
-
-.ti-angle-down {
-  transform: rotate(180deg);
-}
-
-.submenu {
-  list-style-type: none;
-  padding-left: 20px;
-  margin: 0;
-}
-
-.submenu-item {
-  padding: 10px 20px;
-}
-
-.submenu-item:hover {
-  background-color: #495057;
-  padding-left: 25px;
-  transition: padding-left 0.2s ease;
-}
-</style>
+<style></style>

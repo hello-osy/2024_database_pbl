@@ -1,117 +1,117 @@
 import DashboardLayout from "@/layout/dashboard/DashboardLayout.vue";
-
-// Driver Page 
 import DriverPageLayout from "@/layout/driver/DriverPageLayout.vue";
-
 // GeneralViews
 import NotFound from "@/pages/NotFoundPage.vue";
 
-// Login page
+//Login page
 import Login from "@/pages/Login.vue";
+import SignUp from "@/pages/SignUp.vue";
 
 // Admin pages
-import Dashboard from "@/pages/Dashboard.vue";
-import Icons from "@/pages/Icons.vue";
-import DivisionPage from "@/pages/Division.vue";
-import DriverProfiles from "@/pages/DriverProfiles.vue";
-import TransportLog from "@/pages/TransportLog.vue";
-import Yard1 from "@/pages/Yard/Yard1.vue";
-import Yard2 from "@/pages/Yard/Yard2.vue";
-import Yard3 from "@/pages/Yard/Yard3.vue";
-import AssignedManagement from "@/pages/AssignedManagement.vue";
+import DashBoard from "@/pages/Admin/DashBoard.vue";
+import DriverList from "@/pages/Admin/DriverList.vue";
+import TransportLog from "@/pages/Admin/TransportLog.vue";
+import AssignedManagement from "@/pages/Admin/AssignedManagement.vue";
+import Yard1 from "@/pages/Admin/Yard/Yard1.vue"
+import Yard2 from "@/pages/Admin/Yard/Yard2.vue"
+import Yard3 from "@/pages/Admin/Yard/Yard3.vue"
 
 // Driver pages
-import DriverProfile from "../pages/DriverAccount/DriverProfile.vue";
-import DriverDashboard from "../pages/DriverAccount/DriverDashboard.vue";
-import DriverSchedule from "../pages/DriverAccount/DriverSchedule.vue";
-import EditProfile from "../pages/DriverAccount/EditProfile.vue";
+import DriverDashboard from "@/pages/Driver/DriverDashboard.vue";
+import DriverProfile from "@/pages/Driver/DriverProfile.vue";
+import DriverSchedule from "@/pages/Driver/DriverSchedule.vue";
+import EditProfile from "@/pages/Driver/EditProfile.vue";
 
 const routes = [
   {
-    path: "/login",
+    path: "/",
     name: "login",
     component: Login,
   },
   {
-    path: "/",
+    path: "/signup",
+    name: "SignUp",
+    component: SignUp,
+  },
+  {
+    path: "/admin",
     component: DashboardLayout,
     redirect: "/division",
     children: [
       {
-        path: "division",
-        name: "division",
-        component: DivisionPage,
+        path: "dashboard",
+        name: "Dashboard",
+        component: DashBoard,
       },
       {
-        path: "/yard1",
+        path: "yard1",
         name: "yard1",
         component: Yard1,
       },
       {
-        path: "/yard2",
+        path: "yard2",
         name: "yard2",
         component: Yard2,
       },
       {
-        path: "/yard3",
+        path: "yard3",
         name: "yard3",
         component: Yard3,
       },
       {
-        path: "/dashboard",
-        name: "dashboard",
-        component: Dashboard,
+        path: "driverlist",
+        name: "DriverList",
+        component: DriverList,
       },
       {
-        path: "/driver-profiles",
-        name: "driverprofiles",
-        component: DriverProfiles,
-      },
-      {
-        path: "/transport-log",
-        name: "transprot-log",
+        path: "transportlog",
+        name: "transportlog",
         component: TransportLog,
       },
       {
-        path: "/icons",
-        name: "icons",
-        component: Icons,
-      },
-      {
-        path: "/assigned-management",
-        name: "assigned-management",
+        path: "assignedmanagement",
+        name: "AssignedManagement",
         component: AssignedManagement,
       },
     ],
   },
   {
-    path: '/driver', // Base path for DriverPageLayout
+    path: "/driver",
     component: DriverPageLayout,
-    redirect: '/driver/dashboard',
-    children: [ 
+    redirect: "/driver/driverdashboard",
+    children: [
       {
-        path: 'profile', // Nested path (e.g., /driver/profile)
-        name: 'DriverProfile',
-        component: DriverProfile
+        path: "driverdashboard",
+        name: "DriverDashboard",
+        component: DriverDashboard,
       },
       {
-        path: 'dashboard',
-        name: 'DriverDashboard',
-        component: DriverDashboard
+        path: "driverprofile",
+        name: "DriverProfile",
+        component: DriverProfile,
       },
       {
-        path: 'schedules',
-        name: 'DriverSchedule',
-        component: DriverSchedule
+        path: "driverschedule",
+        name: "DriverSchedule",
+        component: DriverSchedule,
       },
       {
-        path: 'edit-profile',
-        name: 'EditProfile',
-        component: EditProfile
-      }
+        path: "editprofile",
+        name: "EditProfile",
+        component: EditProfile,
+      },
     ]
   },
   { path: "*", component: NotFound },
 ];
+
+/**
+ * Asynchronously load view (Webpack Lazy loading compatible)
+ * The specified component must be inside the Views folder
+ * @param  {string} name  the filename (basename) of the view to load.
+function view(name) {
+   var res= require('../components/Dashboard/Views/' + name + '.vue');
+   return res;
+};**/
 
 export default routes;
