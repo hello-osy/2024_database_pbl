@@ -3,10 +3,15 @@
     <!-- Header Section -->
     <div class="header">
       <div class="profile-picture">
-        <!-- Image Upload Button -->
+        <!-- Display Asset Image -->
         <label for="upload-picture">
-          <img :src="driver.picture" alt="Driver Profile Picture" class="profile-image" />
+          <img
+            :src="driver.picture"
+            alt="Driver Profile Picture"
+            class="profile-image"
+          />
         </label>
+        <!-- Upload Button -->
         <input
           type="file"
           id="upload-picture"
@@ -15,8 +20,9 @@
           style="display: none;"
         />
       </div>
-      <h1>{{ driver.name }}</h1>
-      <p class="status">{{ driver.status }}</p>
+      <h1>  {{ driver.name }}</h1>
+      <p> Click on the picture for change profile-picture</p>
+      <br />
     </div>
 
     <!-- Personal Information Section -->
@@ -41,68 +47,49 @@
     </div>
 
     <!-- Action Buttons -->
-    <div div class="actions">
+    <div class="actions">
       <button @click="navigateToEditProfile">Edit My Profile</button>
-      <div class="showContact" v-if="showContactSupport">
-        <ContactUs @closeContactBox="toggleContact">
-        <h1>Contact Us</h1>
-        <p>Manager phone number: 010-3260-1091</p>
-      </ContactUs>
-      </div>
-      <button @click="contactSupport">Contact Support</button>
     </div>
-
   </div>
 </template>
 
 <script>
-import ContactUs from '../../layout/driver/ContactUs.vue';
+
+import driverImage from "@/assets/img/driver-profile03.png";
 
 export default {
-  components: {
-    ContactUs
-  },
   data() {
     return {
       driver: {
         name: "John Doe",
-        picture: '@/public/truck-driver.jpg',
+        picture: require("@/assets/img/driver-profile03.png"), // Load asset image using require
         phone: "123-456-7890",
         email: "john.doe@example.com",
         address: "123 Elm Street, Springfield",
         vehicle: "Truck",
         licensePlate: "XYZ-123",
         status: "Available",
-        header: "Contact With Manager",
-        text: "Phone Number: 010-32601091",
       },
       stats: {
         tripsCompleted: 120,
         rating: 4.8,
       },
-      showContactSupport: false,
     };
   },
   methods: {
-    contactSupport() {
-      this.showContactSupport = true;
-    },
-    closeContactSupport() {
-      this.showContactSupport = false;
-    },
     onImageChange(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          this.driver.picture = e.target.result;
+          this.driver.picture = e.target.result; // Update the picture with the uploaded image
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(file); // Convert image to base64 for preview
       }
     },
     navigateToEditProfile() {
-      this.$router.push({ name: 'EditProfile' });
-    }
+      this.$router.push({ name: "EditProfile" });
+    },
   },
 };
 </script>
@@ -132,17 +119,21 @@ export default {
   object-fit: cover;
 }
 
-.status {
-  font-style: italic;
-  color: green;
-}
-
+/* Info Box CSS */
 .info-section {
   margin-top: 20px;
   padding: 15px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
+.info-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
 
 .info-section h2 {
   margin-bottom: 10px;

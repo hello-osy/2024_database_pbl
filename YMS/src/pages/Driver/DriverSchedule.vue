@@ -15,8 +15,6 @@
       </select>
     </div>
 
-    <!-- Main Content -->
-    <div class="content">
       <!-- New Trips -->
       <div class="schedule-section" v-if="newTrips.length">
         <h2>New Trips</h2>
@@ -25,47 +23,30 @@
           <p><strong>Date:</strong> {{ trip.date }}</p>
           <p><strong>Time:</strong> {{ trip.time }}</p>
           <div class="action-buttons">
-            <button @click="acceptTrip(trip.id)">Accept</button>
+            <button class="accept-button" @click="acceptTrip(trip.id)">Accept</button>
             <button class="decline-button" @click="declineTrip(trip.id)">Decline</button>
           </div>
         </div>
       </div>
 
-      <!-- Upcoming Trips -->
-      <div class="schedule-section" v-if="filteredTripsByStatus.upcoming.length">
-        <h2>Upcoming Trips</h2>
-        <div class="trip" v-for="trip in filteredTripsByStatus.upcoming" :key="trip.id">
+      <!-- Main Content -->
+    <div class="content">
+      <!-- Filtered Trips -->
+      <div class="schedule-section" v-if="filteredTrips.length">
+        <div class="trip" v-for="trip in filteredTrips" :key="trip.id">
           <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
           <p><strong>Date:</strong> {{ trip.date }}</p>
           <p><strong>Time:</strong> {{ trip.time }}</p>
-          <button @click="markCompleted(trip.id)">Mark as Completed</button>
-        </div>
-      </div>
-
-      <!-- Completed Trips -->
-      <div class="schedule-section" v-if="filteredTripsByStatus.completed.length">
-        <h2>Completed Trips</h2>
-        <div class="trip" v-for="trip in filteredTripsByStatus.completed" :key="trip.id">
-          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
-          <p><strong>Date:</strong> {{ trip.date }}</p>
-          <p><strong>Time:</strong> {{ trip.time }}</p>
-          <p class="status-label">Completed</p>
-        </div>
-      </div>
-
-      <!-- Cancelled Trips -->
-      <div class="schedule-section" v-if="filteredTripsByStatus.cancelled.length">
-        <h2>Cancelled Trips</h2>
-        <div class="trip" v-for="trip in filteredTripsByStatus.cancelled" :key="trip.id">
-          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
-          <p><strong>Date:</strong> {{ trip.date }}</p>
-          <p><strong>Time:</strong> {{ trip.time }}</p>
-          <p class="status-label">Cancelled</p>
+          <div v-if="trip.status === 'upcoming'" class="action-buttons">
+            <button @click="markCompleted(trip.id)">Mark as Completed</button>
+          </div>
+          <p v-else-if="trip.status === 'completed'" class="status-label completed">Completed</p>
+          <p v-else-if="trip.status === 'cancelled'" class="status-label cancelled">Cancelled</p>
         </div>
       </div>
 
       <!-- No Trips Message -->
-      <div v-if="!filteredTrips.length" class="no-trips">
+      <div v-else class="no-trips">
         <p>No trips to show.</p>
       </div>
     </div>
@@ -78,7 +59,7 @@ export default {
     return {
       filterStatus: "all", // Default filter
       trips: [
-        {
+        { 
           id: 1,
           pickup: "Location A",
           dropoff: "Location B",
@@ -121,19 +102,17 @@ export default {
       }
       return this.trips.filter((trip) => trip.status === this.filterStatus);
     },
-    filteredTripsByStatus() {
-      return {
-        upcoming: this.trips.filter((trip) => trip.status === "upcoming"),
-        completed: this.trips.filter((trip) => trip.status === "completed"),
-        cancelled: this.trips.filter((trip) => trip.status === "cancelled"),
-      };
-    },
   },
   methods: {
     markCompleted(tripId) {
-      const trip = this.trips.find((t) => t.id === tripId);
-      if (trip) {
-        trip.status = "completed";
+      // Find the trip and update its status
+      const tripIndex = this.trips.findIndex((t) => t.id === tripId);
+      if (tripIndex !== -1) {
+        const updatedTrip = { ...this.trips[tripIndex], status: "completed" };
+        this.trips.splice(tripIndex, 1, updatedTrip); // Replace with updated trip
+        alert(`Trip has been marked as completed.`);
+      } else {
+        alert(`Error: Trip not found.`);
       }
     },
     acceptTrip(tripId) {
@@ -297,5 +276,4 @@ button.decline-button:hover {
 .status-label.cancelled {
   background-color: #f44336;
 }
-
 </style>
