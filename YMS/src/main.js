@@ -1,5 +1,4 @@
 /*!
-
  =========================================================
  * Vue Paper Dashboard - v1.0.1
  =========================================================
@@ -13,17 +12,21 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
  */
-import Vue from "vue";
-import App from "./App";
-import router from "./router/index";
-
-import PaperDashboard from "./plugins/paperDashboard";
-import "vue-notifyjs/themes/default.css";
-
-Vue.use(PaperDashboard);
-
-/* eslint-disable no-new */
-new Vue({
-  router,
-  render: (h) => h(App),
-}).$mount("#app");
+ import Vue from "vue";
+ import App from "./App";
+ import router from "./router";
+ import store from "./store";
+ 
+ import PaperDashboard from "./plugins/paperDashboard";
+ import "vue-notifyjs/themes/default.css";
+ 
+ Vue.use(PaperDashboard);
+ Vue.config.productionTip = false;
+ 
+ /* eslint-disable no-new */
+ new Vue({
+   router, // Vue Router 등록
+   store,  // Vuex Store 등록
+   render: (h) => h(App),
+ }).$mount("#app");
+ 

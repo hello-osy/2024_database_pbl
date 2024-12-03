@@ -1,4 +1,3 @@
-<!-- src/views/TransportLog.vue -->
 <template>
   <div class="transport-log">
     <h2>Transport Log</h2>
@@ -20,7 +19,7 @@
           <td>{{ log.date }}</td>
           <td>{{ log.driver }}</td>
           <td>{{ log.vehicle }}</td>
-          <td :class="log.status.toLowerCase()">{{ log.status }}</td>
+          <td :class="getStatusClass(log.status)">{{ log.status }}</td>
           <td>{{ log.distance }}</td>
         </tr>
       </tbody>
@@ -58,9 +57,17 @@ export default {
           status: "Delayed",
           distance: 120,
         },
-        // 더 많은 데이터 추가 가능
       ],
     };
+  },
+  methods: {
+    getStatusClass(status) {
+      // 상태에 따른 클래스 반환
+      if (status === "Completed") return "completed";
+      if (status === "In Progress") return "in-progress highlighted";
+      if (status === "Delayed") return "delayed";
+      return "";
+    },
   },
 };
 </script>
@@ -120,9 +127,18 @@ p {
 
 .log-table .in-progress {
   color: #ffc107; /* 노란색 (진행 중) */
+  /* font-weight: bold; 
+  background-color: #fff3cd; 
+  border-radius: 4px;
+  padding: 6px 10px; 
+  display: inline-block;  */
 }
 
 .log-table .delayed {
   color: #dc3545; /* 빨간색 (지연) */
 }
+
+/* .log-table .highlighted {
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.5); 
+} */
 </style>

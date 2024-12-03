@@ -5,13 +5,17 @@
       <thead>
         <tr>
           <th>Equipment ID</th>
-          <th>Details</th>
+          <th>Depart Yard</th>
+          <th>Arrive Division</th>
+          <th>Driver</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="equipment in assignedEquipments" :key="equipment.id">
           <td>{{ equipment.id }}</td>
-          <td>{{ equipment.details || "No details" }}</td>
+          <td>{{ equipment.details.departZone }}</td>
+          <td>{{ equipment.details.arriveZone }}</td>
+          <td>{{ equipment.details.driver }}</td>
         </tr>
       </tbody>
     </table>
@@ -19,44 +23,38 @@
 </template>
 
 <script>
-import { EventBus } from "@/eventBus";
+import { mapGetters } from "vuex";
 
 export default {
-  data() {
-    return {
-      assignedEquipments: [], // 할당된 장비 리스트
-    };
-  },
-  created() {
-    // EventBus를 통해 데이터 수신
-    EventBus.$on("update-assigned", this.updateAssignedEquipments);
-  },
-  beforeDestroy() {
-    // 컴포넌트가 소멸되기 전에 EventBus 이벤트 해제
-    EventBus.$off("update-assigned", this.updateAssignedEquipments);
-  },
-  methods: {
-    updateAssignedEquipments(equipments) {
-      this.assignedEquipments = equipments;
-    },
+  computed: {
+    ...mapGetters(["assignedEquipments"]), // Vuex에서 데이터를 가져옴
   },
 };
 </script>
 
 <style scoped>
 .assigned-management {
-  margin-top: 20px;
+  padding: 20px;
 }
+
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 20px;
 }
-th, td {
+
+th,
+td {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
 }
+
 th {
   background-color: #f4f4f4;
+}
+
+h2 {
+  margin-bottom: 20px;
 }
 </style>

@@ -1,14 +1,23 @@
-<!-- src/pages/Division.vue -->
 <template>
   <div class="division-page">
-    <h2>Division</h2>
-    <p>Select a Yard to view its location on the map.</p>
+    <h2 class="page-title">Division</h2>
+    <p class="page-description">Select a Yard to view its location on the map.</p>
 
-    <ul class="yard-list">
-      <li class="yard-item" v-for="yard in yards" :key="yard.name" @click="selectYard(yard)">
-        <span>{{ yard.name }}</span>
-      </li>
-    </ul>
+    <!-- Yard 리스트 -->
+    <div class="yard-container">
+      <div
+        class="yard-card"
+        v-for="yard in yards"
+        :key="yard.name"
+        @click="selectYard(yard)"
+        :class="{ 'active-yard': selectedYard && selectedYard.name === yard.name }"
+      >
+        <h3 class="yard-title">{{ yard.name }}</h3>
+        <p class="yard-coordinates">
+          Latitude: {{ yard.lat.toFixed(4) }}, Longitude: {{ yard.lng.toFixed(4) }}
+        </p>
+      </div>
+    </div>
 
     <!-- 지도 표시 영역 -->
     <div id="map" class="map"></div>
@@ -32,15 +41,15 @@ export default {
   },
   mounted() {
     // Google Maps API 스크립트 로드
-    // if (!window.google) {
-    //   const script = document.createElement("script");
-    //   script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHFKEJ_NU8CbNjFOtOgE4A73cv2phjkpo&callback=initMap`;
-    //   script.async = true;
-    //   window.initMap = this.initMap;
-    //   document.head.appendChild(script);
-    // } else {
-    //   this.initMap();
-    // }
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap`;
+      script.async = true;
+      window.initMap = this.initMap;
+      document.head.appendChild(script);
+    } else {
+      this.initMap();
+    }
   },
   methods: {
     initMap() {
@@ -79,46 +88,71 @@ export default {
 <style scoped>
 .division-page {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-h2 {
-  font-size: 2rem;
+.page-title {
+  font-size: 2.5rem;
   color: #333;
   margin-bottom: 10px;
 }
 
-p {
+.page-description {
   font-size: 1.2rem;
-  color: #555;
+  color: #666;
   margin-bottom: 20px;
+  text-align: center;
 }
 
-.yard-list {
-  list-style-type: none;
-  padding: 0;
+.yard-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
 }
 
-.yard-item {
-  margin: 10px 0;
+.yard-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px 20px;
+  width: 250px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.yard-item span {
+.yard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.active-yard {
+  border-color: #007bff;
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+}
+
+.yard-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 10px;
   color: #007bff;
-  font-size: 1.1rem;
 }
 
-.yard-item:hover span {
-  text-decoration: underline;
+.yard-coordinates {
+  font-size: 0.9rem;
+  color: #555;
 }
 
-/* 지도 영역 */
 .map {
   width: 100%;
-  max-width: 600px;
-  height: 400px;
+  max-width: 800px;
+  height: 500px;
   background-color: #e0e0e0;
-  margin-top: 20px;
+  margin-top: 30px;
   border-radius: 10px;
 }
 </style>

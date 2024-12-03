@@ -1,102 +1,113 @@
-<!-- src/views/Yard1.vue -->
 <template>
   <div class="yard-content">
-    <!-- 검색 입력 필드 -->
     <div class="search-bar">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search by ID (e.g., T_001, C_002)"
-      />
+      <input v-model="searchQuery" type="text" placeholder="Search by ID (e.g., T_001, C_002)" />
     </div>
 
-    <!-- Stats Cards Section -->
     <div class="stats-row">
       <div class="stats-card" v-for="stats in statsCards" :key="stats.title">
-        <div class="icon-container" :class="`icon-${stats.type}`">
-          <i :class="stats.icon"></i>
-        </div>
-        <div class="stats-info">
-          <p>{{ stats.title }}</p>
-          <h3>{{ stats.value }}</h3>
+        <div class="stats-content">
+          <div class="stats-title">{{ stats.title }}</div>
+          <div class="stats-value">{{ stats.value }}</div>
         </div>
       </div>
     </div>
 
-    <!-- Custom Section for Yard Layout (2x2) -->
     <div class="yard-layout">
-      <div class="site" v-for="(site, index) in filteredSiteStatus" :key="index">
-        <h3>{{ site.name }}</h3>
+      <div class="site-block" v-for="(site, index) in filteredSiteStatus" :key="index">
+        <h3 class="site-title">{{ site.name }}</h3>
         <div class="truck-list">
           <div
             v-for="truck in site.trucks"
             :key="truck.id"
-            class="truck-icon"
-            :class="truck.status"
+            :class="['truck-icon', truck.status, { assigned: isAssigned(truck) }]"
+            @click="selectTruck(truck)"
           >
             {{ truck.id }}
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Truck 또는 Trailer만 선택 가능한 Modal -->
+    <div v-if="selectedTruck && (selectedTruck.id.startsWith('T') || selectedTruck.id.startsWith('TL'))" class="modal">
+      <div class="modal-content">
+        <h3>
+          Configure {{ selectedTruck.id.startsWith('TL') ? 'Trailer' : 'Truck' }} {{ selectedTruck.id }}
+        </h3>
+
+        <div v-if="selectedTruck && !selectedTruck.id.startsWith('TL')">
+          <label>Choose Chassis:</label>
+          <select v-model="selectedChassis">
+            <option v-for="chassis in chassisList" :key="chassis.id" :value="chassis">
+              {{ chassis.id }}
+            </option>
+          </select>
+        </div>
+
+        <label>Choose Container:</label>
+        <select v-model="selectedContainer">
+          <option v-for="container in containerList" :key="container.id" :value="container">
+            {{ container.id }}
+          </option>
+        </select>
+
+        <label>Depart Zone:</label>
+        <input v-model="departZone" placeholder="Enter departure zone" />
+
+        <label>Arrive Zone:</label>
+        <input v-model="arriveZone" placeholder="Enter arrival zone" />
+
+        <label>Assign Driver:</label>
+        <select v-model="selectedDriver">
+          <option v-for="driver in drivers" :key="driver.User_ID" :value="driver">
+            {{ driver.User_ID }}
+          </option>
+        </select>
+
+        <button @click="confirmSelection">Confirm</button>
+        <button @click="cancelSelection">Cancel</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { mapActions } from "vuex";
+
 export default {
   data() {
     const generateTrucks = (prefix, count, status) => {
       return Array.from({ length: count }, (_, i) => ({
-        id: `${prefix}_${String(i + 1).padStart(3, '0')}`, // 예: T_001, C_001
+        id: `${prefix}_${String(i + 1).padStart(3, "0")}`,
         status: status,
       }));
     };
 
     return {
-      searchQuery: "", // 검색어 저장
+      searchQuery: "",
+      selectedTruck: null,
+      selectedChassis: null,
+      selectedContainer: null,
+      departZone: "",
+      arriveZone: "",
+      selectedDriver: null,
       statsCards: [
-        {
-          type: "warning",
-          icon: "ti-server",
-          title: "Total Trucks",
-          value: 40,
-        },
-        {
-          type: "success",
-          icon: "ti-wallet",
-          title: "Total Chassis",
-          value: 30,
-        },
-        {
-          type: "danger",
-          icon: "ti-pulse",
-          title: "Total Containers",
-          value: 30,
-        },
-        {
-          type: "info",
-          icon: "ti-twitter-alt",
-          title: "Total Trailers",
-          value: 10,
-        },
+        { type: "warning", title: "Total Trucks : ", value: 40 },
+        { type: "success", title: "Total Chassis : ", value: 30 },
+        { type: "danger", title: "Total Containers : ", value: 30 },
+        { type: "info", title: "Total Trailers : ", value: 10 },
       ],
       siteStatus: [
-        {
-          name: "Truck Site",
-          trucks: generateTrucks("T", 40, "in-dock"),
-        },
-        {
-          name: "Chassis Site",
-          trucks: generateTrucks("C", 30, "in-parking"),
-        },
-        {
-          name: "Container Site",
-          trucks: generateTrucks("CT", 30, "in-dock"),
-        },
-        {
-          name: "Trailer Site",
-          trucks: generateTrucks("TL", 10, "in-parking"),
-        },
+        { name: "Truck Site", trucks: generateTrucks("T", 40, "in-dock") },
+        { name: "Chassis Site", trucks: generateTrucks("C", 30, "in-parking") },
+        { name: "Container Site", trucks: generateTrucks("CT", 30, "in-dock") },
+        { name: "Trailer Site", trucks: generateTrucks("TL", 10, "in-parking") },
+      ],
+      drivers: [
+        { User_ID: "D001", Current_Location: "Zone A", Current_Status: "Active" },
+        { User_ID: "D002", Current_Location: "Zone B", Current_Status: "Inactive" },
+        { User_ID: "D003", Current_Location: "Zone C", Current_Status: "On Break" },
       ],
     };
   },
@@ -105,19 +116,69 @@ export default {
       if (!this.searchQuery) {
         return this.siteStatus;
       }
-      
-      // 검색어에 맞는 트럭만 필터링
-      return this.siteStatus.map(site => {
-        const filteredTrucks = site.trucks.filter(truck =>
-          truck.id.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-        
-        // 해당 사이트에 일치하는 트럭이 있을 경우만 반환
-        return {
-          ...site,
-          trucks: filteredTrucks,
-        };
-      }).filter(site => site.trucks.length > 0);
+
+      return this.siteStatus
+        .map((site) => {
+          const filteredTrucks = site.trucks.filter((truck) =>
+            truck.id.toLowerCase().includes(this.searchQuery.toLowerCase())
+          );
+          return { ...site, trucks: filteredTrucks };
+        })
+        .filter((site) => site.trucks.length > 0);
+    },
+    chassisList() {
+      return this.siteStatus.find((site) => site.name === "Chassis Site").trucks;
+    },
+    containerList() {
+      return this.siteStatus.find((site) => site.name === "Container Site").trucks;
+    },
+  },
+  methods: {
+    ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
+    selectTruck(truck) {
+      // Truck(T) 또는 Trailer(TL)만 선택 가능
+      if (truck.id.startsWith("T") || truck.id.startsWith("TL")) {
+        this.selectedTruck = truck;
+        this.selectedChassis = null;
+        this.selectedContainer = null;
+      } else {
+        alert("Only Trucks and Trailers can be configured.");
+      }
+    },
+    isAssigned(equipment) {
+      return this.$store.state.assignedEquipments.some(
+        (assigned) => assigned.id === equipment.id
+      );
+    },
+    confirmSelection() {
+      const newAssignments = [this.selectedTruck, this.selectedChassis, this.selectedContainer]
+        .filter(Boolean)
+        .map((equipment) => ({
+          id: equipment.id,
+          details: {
+            departZone: this.departZone || "N/A",
+            arriveZone: this.arriveZone || "N/A",
+            driver: this.selectedDriver?.User_ID || "Unassigned",
+          },
+        }));
+
+      // Vuex에 데이터 추가
+      newAssignments.forEach((equipment) => {
+        this.addEquipment(equipment);
+      });
+
+      this.resetSelection();
+    },
+    cancelSelection() {
+      this.resetSelection();
+    },
+    resetSelection() {
+      this.selectedTruck = null;
+      this.selectedChassis = null;
+      this.selectedContainer = null;
+      this.departZone = "";
+      this.arriveZone = "";
+      this.selectedDriver = null;
     },
   },
 };
@@ -145,50 +206,41 @@ export default {
   display: flex;
   gap: 20px;
   margin-bottom: 30px;
-  width: 100%;
+  justify-content: space-between;
 }
 
 .stats-card {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: 10px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
-  min-width: 150px;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.icon-container {
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.stats-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stats-title {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.stats-value {
   font-size: 2rem;
-  margin-right: 15px;
-}
-
-.icon-warning {
-  color: #ffc107;
-}
-
-.icon-success {
-  color: #28a745;
-}
-
-.icon-danger {
-  color: #dc3545;
-}
-
-.icon-info {
-  color: #17a2b8;
-}
-
-.stats-info p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #888;
-}
-
-.stats-info h3 {
-  margin: 0;
-  font-size: 1.5rem;
   font-weight: bold;
 }
 
@@ -199,16 +251,15 @@ export default {
   width: 100%;
 }
 
-.site {
-  padding: 15px;
-  border-radius: 8px;
+.site-block {
   background-color: #f8f9fa;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  min-width: 200px;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.site h3 {
-  font-size: 1.2rem;
+.site-title {
+  font-size: 1.3rem;
   margin-bottom: 10px;
   color: #333;
 }
@@ -235,12 +286,86 @@ export default {
 .in-dock {
   background-color: #007bff;
 }
-
 .in-parking {
   background-color: #28a745;
 }
+.assigned {
+  border: 2px solid #ffa726;
+  box-shadow: 0 0 8px #ffa726;
+}
 
-.wrong-location {
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 15px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.modal-content h3 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-content label {
+  display: block;
+  margin: 10px 0 5px;
+  font-size: 1rem;
+  color: #555;
+}
+
+.modal-content select,
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.modal-content button {
+  margin: 10px 5px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content button:first-child {
+  background-color: #28a745;
+  color: white;
+}
+
+.modal-content button:first-child:hover {
+  background-color: #218838;
+}
+
+.modal-content button:last-child {
   background-color: #dc3545;
+  color: white;
+}
+
+.modal-content button:last-child:hover {
+  background-color: #c82333;
 }
 </style>
