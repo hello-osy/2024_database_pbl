@@ -114,6 +114,32 @@ def login():
             "error": str(e)
         }), 500
 
+# Transport_Log 데이터를 반환하는 API
+@app.route('/api/transport_logs', methods=['GET'])
+def get_transport_logs():
+    try:
+        # Transport_Log 테이블 데이터 가져오기
+        result = db.session.execute(text("""
+            SELECT 
+                Log_ID AS id,
+                Driver_ID AS driver,
+                Truck_ID AS vehicle,
+                CASE 
+                    WHEN CURDATE() BETWEEN Depart_Date AND Arrive_Date THEN 'In Progress'
+                    WHEN CURDATE() > Arrive_Date THEN 'Completed'
+                    ELSE 'Scheduled'
+                END AS status,
+                DATEDIFF(Arrive_Date, Depart_Date) * 50 AS distance, -- 임의 거리 계산
+                Depart_Date AS date
+            FROM Transport_Log
+        """))
+        
+        # 결과를 JSON으로 변환
+        logs = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": logs})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 # 데이터베이스 연결 테스트 API
 @app.route("/test_db", methods=["GET"])

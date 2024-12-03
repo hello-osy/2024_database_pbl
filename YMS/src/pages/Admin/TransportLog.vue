@@ -1,4 +1,3 @@
-<!-- src/views/TransportLog.vue -->
 <template>
   <div class="transport-log">
     <h2>Transport Log</h2>
@@ -29,38 +28,37 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "TransportLog",
   data() {
     return {
-      transportLogs: [
-        {
-          id: 1,
-          date: "2024-11-12",
-          driver: "John Doe",
-          vehicle: "Truck 23",
-          status: "Completed",
-          distance: 150,
-        },
-        {
-          id: 2,
-          date: "2024-11-11",
-          driver: "Jane Smith",
-          vehicle: "Van 45",
-          status: "In Progress",
-          distance: 75,
-        },
-        {
-          id: 3,
-          date: "2024-11-10",
-          driver: "Alice Johnson",
-          vehicle: "Truck 34",
-          status: "Delayed",
-          distance: 120,
-        },
-        // 더 많은 데이터 추가 가능
-      ],
+      transportLogs: [], // 초기 데이터
     };
+  },
+  methods: {
+    async fetchTransportLogs() {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/api/transport_logs",
+        );
+        if (response.data.success) {
+          this.transportLogs = response.data.data;
+        } else {
+          console.error(
+            "Error fetching transport logs:",
+            response.data.message,
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching transport logs:", error.message);
+      }
+    },
+  },
+  mounted() {
+    // 컴포넌트가 마운트될 때 데이터 가져오기
+    this.fetchTransportLogs();
   },
 };
 </script>
@@ -122,7 +120,7 @@ p {
   color: #ffc107; /* 노란색 (진행 중) */
 }
 
-.log-table .delayed {
-  color: #dc3545; /* 빨간색 (지연) */
+.log-table .scheduled {
+  color: #007bff; /* 파란색 (예정) */
 }
 </style>
