@@ -4,3 +4,6 @@ SQLAlchemy
 pymysql
 cryptography
 sqlacodegen
+flask_cors
+pyjwt
+datetime
