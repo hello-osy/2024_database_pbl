@@ -1,3 +1,6 @@
+/**
+ * 글로벌 플러그인 설정
+ */
 import Notify from "vue-notifyjs";
 import SideBar from "@/components/SidebarPlugin";
 import GlobalComponents from "./globalComponents";

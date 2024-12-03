@@ -13,7 +13,7 @@
       <div class="logo">
         <a href="#" class="simple-text">
           <div class="logo-img">
-            <img src="@/assets/img/onepiece_logo.png" alt="" />
+            <img src="@/assets/img/onepiece_logo4.png" alt="" />
           </div>
           {{ title }}
         </a>
@@ -28,6 +28,7 @@
             :to="link.path"
             :name="link.name"
             :icon="link.icon"
+            :children="link.children"
           >
           </sidebar-link>
         </slot>
@@ -52,10 +53,10 @@ export default {
         let acceptedValues = ["white", "black", "darkblue"];
         return acceptedValues.indexOf(value) !== -1;
       },
-    },
+    }, // data-background-color를 설정하기 위한 값
     activeColor: {
       type: String,
-      default: "success",
+      default: "info",
       validator: (value) => {
         let acceptedValues = [
           "primary",
@@ -129,6 +130,9 @@ export default {
     this.$watch("$route", this.findActiveLink, {
       immediate: true,
     });
+    console.log("sidebar.vue - sidebarlinks:", this.sidebarLinks)
+    console.log("SidebarLink.vue - name:", this.name)
+    console.log("SidebarLink.vue - icon:", this.icon)
   },
 };
 </script>

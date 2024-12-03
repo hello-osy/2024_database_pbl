@@ -65,7 +65,7 @@
           text-align: center;
 
         img{
-            max-width: 21px;
+            max-width: 35px;
         }
       }
     }
@@ -76,7 +76,20 @@
 
     .nav-item {
       width: 100%;
+      // display: flex; // 한 줄로 정렬
+      // align-items: center; // 세로 가운데 정렬
+      // justify-content: space-between; // 양쪽 정렬
+
+      .nav-link-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      
       .nav-link {
+        display: flex;
+        align-items: center; // 세로 가운데 정렬
+        flex-grow: 1; // 남은 공간을 채움
         margin: 10px 0px;
         padding-left: 25px;
         padding-right: 25px;
@@ -91,6 +104,17 @@
       &.active > .nav-link {
         color: $primary-color;
         opacity: 1;
+      }
+      
+      .arrow-icon {
+        margin-left: auto; // 화살표를 오른쪽 끝으로 정렬
+        font-size: 16px; // 화살표 아이콘 크기 조정
+        cursor: pointer; // 클릭 가능한 커서
+        transition: transform 0.3s ease-in-out; /* 부드러운 회전 애니메이션 */
+      }
+      
+      .ti-angle-up {
+        transform: rotate(360deg); /* 아이콘을 180도 회전 */
       }
     }
 
@@ -193,4 +217,30 @@
   height: 100%;
   overflow: hidden;
   overflow-y: hidden;
+}
+
+.sub-menu {
+  padding-left: 20px;
+  list-style: none;
+}
+
+.sub-menu li {
+  margin-top: 5px;
+}
+
+.sub-menu {
+  padding-left: 35%;
+  list-style-type: disc;
+}
+
+/* 기본 링크 스타일 */
+.sub-menu-link {
+  text-decoration: none;
+  color: white; /* 기본 색상 */
+}
+
+/* 링크가 활성화된 상태일 때 (현재 경로와 일치) */
+.router-link-active {
+  color: green !important; /* 활성화된 링크 색상 */
+  font-weight: bold; /* 필요 시 글꼴 강조 */
 }

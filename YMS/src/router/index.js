@@ -11,11 +11,16 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('loggedIn');
-  if (to.name !== 'login' && !isAuthenticated) {
-    next({ name: 'login' }); // 로그인 페이지로 리다이렉트
+  
+  // 인증되지 않은 사용자가 로그인이나 회원가입 페이지로 접근하면 허용
+  if (to.name === 'login' || to.name === 'SignUp') {
+    next(); // 회원가입 및 로그인 페이지로의 이동 허용
+  } else if (!isAuthenticated) {
+    next({ name: 'login' }); // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
   } else {
-    next(); // 이동 허용
+    next(); // 인증된 사용자는 이동 허용
   }
 });
+
 
 export default router;

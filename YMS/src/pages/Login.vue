@@ -1,128 +1,116 @@
 <template>
-    <div class="login-container">
-        <h1>Sign In</h1>
-        <div class="login-box">
-            <form @submit.prevent="handleLogin">
-                <label for="role">Role:</label>
-                <select v-model="role" id="role" required>
-                  <option value="manager">Manager</option>
-                  <option value="driver">Driver</option>
-                </select>
-                <br />
-                <label for="username">Username:</label>
-                <input type="text" id="username" v-model="username" required />
-                <br />
-                <label for="password">Password:</label>
-                <input type="password" id="password" v-model="password" required />
-                <br />
-                <button type="submit">Sign In</button>
-              </form>
-              <p v-if="errorMessage" id="errorMessage">{{ errorMessage }}</p>
-        </div>
+  <div class="login-container">
+    <div class="login-box">
+      <form @submit.prevent="handleLogin">
+        <label class="login-page-logo">
+          <img src="@/assets/img/onepiece-logo-word.png" />
+        </label>
+        <br />
+        <label for="username"></label>
+        <input
+          type="text"
+          id="username"
+          v-model="username"
+          required
+          placeholder="Username"
+        />
+        <br />
+        <label for="password"></label>
+        <input
+          type="password"
+          id="password"
+          v-model="password"
+          required
+          placeholder="Password"
+        />
+        <br />
+        <p v-if="errorMessage" id="errorMessage">{{ errorMessage }}</p>
+        <button type="submit">Sign In</button>
+      </form>
+      <div class="additional-links">
+        <p>
+          <router-link to="/forgot-credentials">Forgot your Username or Password?</router-link>
+        </p>
+        <p>
+          <span>Don’t have an account? </span>
+          <router-link to="/signup">Sign up</router-link>
+        </p>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
-    export default {
-        data() {
-          return {
-            role: "",
-            username: "",
-            password: "",
-            errorMessage: "",
-          };
-        },
-        // mounted() {
-        //   const link = document.createElement("link");
-        //   link.rel = "stylesheet";
-        //   link.href = "@/assets/css/signin.css"; // signin.css의 실제 경로로 변경
-        //   link.id = "signin-styles"; // 나중에 제거할 수 있도록 ID 추가
-        //   document.head.appendChild(link);
-        // },
-        // beforeDestroy() {
-        //   const link = document.getElementById("signin-styles");
-        //   if (link) {
-        //     document.head.removeChild(link); // 컴포넌트가 제거되면 스타일도 제거
-        //   }
-        // },
-        methods: {
-          handleLogin() {
-            if (this.role === "manager" && this.username === "manager001" && this.password === "1234") {
-              localStorage.setItem("loggedIn", "true"); // 인증 상태 저장
-              this.$router.push({name: "dashboard"}); // 관리자 페이지로 이동
-            } else if (this.role === "driver" && this.username === "driver001" && this.password === "5678") {
-              this.$router.push({name: "driver"});  // 드라이버 페이지로 이동
-            } else {
-              this.errorMessage = "Invalid username or password.";
-            }
-          },
-        },
-      };
+export default {
+  data() {
+    return {
+      username: "",
+      password: "",
+      errorMessage: "",
+    };
+  },
+  methods: {
+    handleLogin() {
+      // 로컬스토리지에서 사용자 목록 가져오기
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      
+      // 입력한 사용자 정보로 검색
+      const user = users.find(
+        (u) => u.username === this.username && u.password === this.password
+      );
+
+      if (user) {
+        localStorage.setItem("loggedIn", "true");
+        if (this.username === "manager001") {
+          this.$router.push("/admin/dashboard"); // 매니저 페이지로 이동
+        } else if (this.username === "driver001") {
+          this.$router.push("/driver/driverdashboard"); // 드라이버 페이지로 이동
+        } else {
+          this.errorMessage = "No page available for this user.";
+        }
+      } else {
+        this.errorMessage = "Invalid username or password.";
+      }
+    },
+  },
+  mounted() {
+    // 기본 사용자 계정 추가 (초기화)
+    const defaultUsers = [
+      { username: "manager001", password: "1234" },
+      { username: "driver001", password: "1234" },
+    ];
+
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    if (users.length === 0) {
+      localStorage.setItem("users", JSON.stringify(defaultUsers));
+    }
+  },
+};
 </script>
+          <!-- // async login() {
+          //   try {
+          //     const response = await axios.post('', {
+          //       id: this.username,
+          //       password: this.password,
+          //     });
 
-<style scoped>
-  /* 기본 스타일 */
-  body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f4f4f4;
-  }
+          //     if (response.data.success) {
+          //       const userId = this.username;
+          //       const userPw = this.password;
 
-  /* 로그인 페이지 스타일 */
-  .login-container {
-      text-align: center;
-  }
+          //       if(userId === "manager001" && this.password === "1234") {
+          //         //localStorage.setItem("loggedIn", "ture");
+          //         this.$router.push({name: "division"});
+          //       }
 
-  .login-box {
-      background-color: #fff;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      width: 350px;
-  }
+          //       localStorage.setItem('token', response.data.token);
+          //     }
+          //     else {
+          //       this.errorMessage = "Invalid username or password";
+          //     }
+          //   } catch (error){
+          //     this.errorMessage = error.response?.data?.message || 'An error occuered';
+          //   }
+          // } -->
 
-  h1 {
-      font-size: 32px;
-      margin-bottom: 20px;
-  }
-
-  label {
-      font-size: 18px;
-      margin: 15px 0 5px;
-      display: block;
-  }
-
-  input, select {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
-  }
-
-  button {
-      width: 100%;
-      padding: 15px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 18px;
-  }
-
-  button:hover {
-      background-color: #45a049;
-  }
-
-  #errorMessage {
-      color: red;
-      margin-top: 10px;
-  }
-</style>
+<style></style>

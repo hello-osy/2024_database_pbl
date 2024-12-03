@@ -2,11 +2,7 @@
   <div class="wrapper">
     <side-bar :sidebarLinks="links">
       <!-- <template slot="links">
-        <sidebar-link :to="{name: 'division'}" name="Division" icon="ti-map-alt" />
-        <sidebar-link :to="{name: 'transportlog'}" name="Transport Log" icon="ti-receipt" />
-        <sidebar-link :to="{name: 'driverprofiles'}" name="Driver Profiles" icon="ti-id-badge" />
-        <sidebar-link :to="{name: 'dashboard'}" name="Dashboard" icon="ti-panel" />
-        <sidebar-link :to="{name: 'yard1'}" name="Icons" icon="ti-pencil-alt2" />
+        <sidebar-link to="/driver/profile" name="Profile" icon="ti-map-alt" />
       </template> -->
       <mobile-menu>
         <li class="nav-item">
@@ -48,31 +44,25 @@
 <style lang="scss"></style>
 <script>
 import TopNavbar from "./TopNavbar.vue";
-// import ContentFooter from "./ContentFooter.vue";
 import DashboardContent from "./Content.vue";
 import MobileMenu from "./MobileMenu";
-import AssignedManagement from "../../pages/Admin/AssignedManagement.vue";
+// import ContentFooter from "./ContentFooter.vue";
 export default {
   data() {
     return {
       links: [
-        { path: '/admin/dashboard', name: 'Dashboard', icon: 'ti-panel', 
-          children: [
-            { path: '/admin/yard1', name: 'Yard1'},
-            { path: '/admin/yard2', name: 'Yard2'}
-          ]
-         },
-        { path: '/admin/transportlog', name: 'Transport Log', icon: 'ti-receipt' },
-        { path: '/admin/driverlist', name: 'Driver List', icon: 'ti-id-badge' },
-        { path: '/admin/assignedmanagement', name: 'AssignedManagement', icon: 'ti-truck'}
+        { path: '/driver/driverdashboard', name: 'Dashboard', icon: 'ti-panel'},
+        { path: '/driver/driverprofile', name: 'Profile', icon: 'ti-user'},
+        { path: '/driver/driverschedule', name: 'Schedule', icon: 'ti-alarm-clock'},
+        { path: '/driver/editprofile', name: 'EditProfile', icon: 'ti-pencil-alt'}
       ],
     }
   },
   components: {
     TopNavbar,
-    // ContentFooter,
     DashboardContent,
     MobileMenu,
+    // ContentFooter,
   },
   methods: {
     toggleSidebar() {

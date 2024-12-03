@@ -23,21 +23,24 @@ export default {
 };
 </script>
 <style lang="scss">
-$bg-nude: #f4f3ef !default;
+// $bg-nude: #f4f3ef !default;
 
-.moving-arrow {
-  border-right: 17px solid $bg-nude;
-  border-top: 17px solid transparent;
-  border-bottom: 17px solid transparent;
-  display: inline-block;
-  position: absolute;
-  left: 243px;
-  top: 95px;
-  transition: all 0.5s cubic-bezier(0.29, 1.42, 0.79, 1);
-}
-@media (max-width: 992px) {
-  .moving-arrow {
-    display: none;
-  }
-}
+// .moving-arrow {
+//   //CSS로 삼각형 만들기
+//   //관련 자료: https://fromnowwon.tistory.com/entry/css-triangle-bubble
+//   border-right: 17px solid $bg-nude;
+//   border-top: 17px solid transparent;
+//   border-bottom: 17px solid transparent;
+
+//   display: inline-block;
+//   position: absolute;
+//   left: 243px;
+//   top: 95px;
+//   transition: all 0.5s cubic-bezier(0.29, 1.42, 0.79, 1);
+// }
+// @media (max-width: 992px) {
+//   .moving-arrow {
+//     display: none;
+//   }
+// }
 </style>
