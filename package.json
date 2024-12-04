@@ -1,0 +1,12 @@
+{
+  "name": "2024_database_pbl",
+  "version": "1.0.0",
+  "description": "| 팀원       | 직책   | 역할       |\r | ---------- | ------ | ---------- |\r | 오상영     | 팀장   | 백엔드     |\r | 이재욱     | 개발자 | 백엔드     |\r | 한륜헌     | 개발자 | 프런트엔드 |\r | 바야스갈랑 | 개발자 | 프런트엔드 |\r | 서영건     | 개발자 | 프런트엔드 |",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

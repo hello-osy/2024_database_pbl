@@ -1,12 +1,12 @@
-<!-- src/views/Yard1.vue -->
 <template>
   <div class="yard-content">
+    <h2 class="yard-title">Yard: HOU_YARD_0001</h2>
     <!-- 검색 입력 필드 -->
     <div class="search-bar">
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Search by ID (e.g., T_001, C_002)"
+        placeholder="Search by Zone ID (e.g., T_ZONE_0001, C_ZONE_0002)"
       />
     </div>
 
@@ -23,18 +23,25 @@
       </div>
     </div>
 
-    <!-- Custom Section for Yard Layout (2x2) -->
+    <!-- Custom Section for Yard Layout -->
     <div class="yard-layout">
-      <div class="site" v-for="(site, index) in filteredSiteStatus" :key="index">
-        <h3>{{ site.name }}</h3>
-        <div class="truck-list">
+      <!-- Display 4 sites in a 2x2 grid -->
+      <div v-for="(site, index) in filteredSites" :key="index" class="site-box">
+        <h3>{{ site.site_name }}</h3>
+        <div class="site-info">
+          <p>Storage Type: {{ site.storage_type }}</p>
+          <p>Max Size: {{ site.y_max_size }}x{{ site.x_max_size }}</p>
+        </div>
+
+        <!-- Zone display under each site -->
+        <div class="zone-grid">
           <div
-            v-for="truck in site.trucks"
-            :key="truck.id"
-            class="truck-icon"
-            :class="truck.status"
+            v-for="zone in site.zones"
+            :key="zone.zone_id"
+            class="zone-box"
+            :class="zone.status.toLowerCase().replace(' ', '-')"
           >
-            {{ truck.id }}
+            {{ zone.zone_id }}
           </div>
         </div>
       </div>
@@ -43,82 +50,83 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
-    const generateTrucks = (prefix, count, status) => {
-      return Array.from({ length: count }, (_, i) => ({
-        id: `${prefix}_${String(i + 1).padStart(3, '0')}`, // 예: T_001, C_001
-        status: status,
-      }));
-    };
-
     return {
-      searchQuery: "", // 검색어 저장
+      searchQuery: "",
       statsCards: [
-        {
-          type: "warning",
-          icon: "ti-server",
-          title: "Total Trucks",
-          value: 40,
-        },
+        { type: "warning", icon: "ti-server", title: "Total Zones", value: 50 },
         {
           type: "success",
           icon: "ti-wallet",
-          title: "Total Chassis",
+          title: "Available Zones",
           value: 30,
         },
         {
           type: "danger",
           icon: "ti-pulse",
-          title: "Total Containers",
-          value: 30,
+          title: "Occupied Zones",
+          value: 15,
         },
         {
           type: "info",
           icon: "ti-twitter-alt",
-          title: "Total Trailers",
-          value: 10,
+          title: "Inactive Zones",
+          value: 5,
         },
       ],
-      siteStatus: [
-        {
-          name: "Truck Site",
-          trucks: generateTrucks("T", 40, "in-dock"),
-        },
-        {
-          name: "Chassis Site",
-          trucks: generateTrucks("C", 30, "in-parking"),
-        },
-        {
-          name: "Container Site",
-          trucks: generateTrucks("CT", 30, "in-dock"),
-        },
-        {
-          name: "Trailer Site",
-          trucks: generateTrucks("TL", 10, "in-parking"),
-        },
-      ],
+      sites: [],
     };
   },
-  computed: {
-    filteredSiteStatus() {
-      if (!this.searchQuery) {
-        return this.siteStatus;
-      }
-      
-      // 검색어에 맞는 트럭만 필터링
-      return this.siteStatus.map(site => {
-        const filteredTrucks = site.trucks.filter(truck =>
-          truck.id.toLowerCase().includes(this.searchQuery.toLowerCase())
+  methods: {
+    async fetchYardData() {
+      try {
+        // Get sites data for HOU_YARD_0001
+        const siteResponse = await axios.get(
+          "http://localhost:8080/api/sites/by-yard/HOU_YARD_0001",
         );
-        
-        // 해당 사이트에 일치하는 트럭이 있을 경우만 반환
-        return {
-          ...site,
-          trucks: filteredTrucks,
-        };
-      }).filter(site => site.trucks.length > 0);
+        if (siteResponse.data.success) {
+          const sites = siteResponse.data.data;
+
+          // For each site, fetch its associated zone data
+          for (const site of sites) {
+            const zoneResponse = await axios.get(
+              `http://localhost:8080/api/zones/by-site/${site.site_id}`,
+            );
+            site.zones = zoneResponse.data.success
+              ? zoneResponse.data.data
+              : [];
+          }
+
+          this.sites = sites;
+        }
+      } catch (error) {
+        console.error("Error fetching yard data:", error.message);
+      }
     },
+  },
+  computed: {
+    filteredSites() {
+      if (!this.searchQuery) {
+        return this.sites;
+      }
+
+      return this.sites
+        .map((site) => {
+          const filteredZones = site.zones.filter((zone) =>
+            zone.zone_id.toLowerCase().includes(this.searchQuery.toLowerCase()),
+          );
+          return filteredZones.length > 0
+            ? { ...site, zones: filteredZones }
+            : null;
+        })
+        .filter((site) => site !== null);
+    },
+  },
+  mounted() {
+    this.fetchYardData();
   },
 };
 </script>
@@ -126,10 +134,9 @@ export default {
 <style scoped>
 .yard-content {
   padding: 20px;
-}
-
-.search-bar {
-  margin-bottom: 20px;
+  background-color: #f4f4f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 .search-bar input {
@@ -138,7 +145,6 @@ export default {
   font-size: 1rem;
   border: 1px solid #ddd;
   border-radius: 5px;
-  box-sizing: border-box;
 }
 
 .stats-row {
@@ -156,91 +162,74 @@ export default {
   background-color: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
-  min-width: 150px;
+  text-align: center;
 }
 
 .icon-container {
   font-size: 2rem;
-  margin-right: 15px;
+  margin-right: 10px;
 }
 
-.icon-warning {
-  color: #ffc107;
+.zone-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 15px;
 }
 
-.icon-success {
-  color: #28a745;
-}
-
-.icon-danger {
-  color: #dc3545;
-}
-
-.icon-info {
-  color: #17a2b8;
-}
-
-.stats-info p {
-  margin: 0;
+.zone-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
   font-size: 0.9rem;
-  color: #888;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
 }
 
-.stats-info h3 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: bold;
+.zone-box.in-dock {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.zone-box.in-parking {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.zone-box.wrong-location {
+  background-color: #dc3545;
+  color: #fff;
 }
 
 .yard-layout {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  width: 100%;
+  margin-top: 30px;
 }
 
-.site {
-  padding: 15px;
+.site-box {
+  padding: 20px;
   border-radius: 8px;
-  background-color: #f8f9fa;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  min-width: 200px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.site h3 {
-  font-size: 1.2rem;
+.site-box h3 {
+  font-size: 1.5rem;
   margin-bottom: 10px;
-  color: #333;
 }
 
-.truck-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.truck-icon {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #fff;
-  text-align: center;
-}
-
-.in-dock {
-  background-color: #007bff;
-}
-
-.in-parking {
-  background-color: #28a745;
-}
-
-.wrong-location {
-  background-color: #dc3545;
+.site-info {
+  font-size: 1rem;
+  margin-bottom: 15px;
 }
 </style>
