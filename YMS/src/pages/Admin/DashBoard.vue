@@ -28,9 +28,11 @@ export default {
       map: null,
       marker: null,
       yards: [
-        { name: "Yard 1", lat: 29.7559, lng: -95.4015 }, // 휴스턴 좌표
-        { name: "Yard 2", lat: 29.7559, lng: -95.4015 }, // 휴스턴 좌표
-        { name: "Yard 3", lat: 34.0522, lng: -118.2437 }, // 로스엔젤레스 좌표
+        { name: "HOU", lat: 29.7559, lng: -95.4015 }, // 휴스턴 좌표
+        { name: "LA", lat: 34.0522, lng: -118.2437 }, // 로스엔젤레스 좌표
+        { name: "MOB", lat: 30.6926, lng: -88.0395 }, // 모빌 좌표
+        { name: "PHX", lat: 33.4401, lng: -112.0807 }, // 피닉스 좌표
+        { name: "SAV", lat: 32.1033, lng: -81.108 }, // 서배너 좌표
       ],
       selectedYard: null,
     };

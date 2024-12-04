@@ -56,17 +56,36 @@ export default {
   data() {
     return {
       links: [
-        { path: '/admin/dashboard', name: 'Dashboard', icon: 'ti-panel', 
+        {
+          path: "/admin/dashboard",
+          name: "Dashboard",
+          icon: "ti-panel",
           children: [
-            { path: '/admin/yard1', name: 'Yard1'},
-            { path: '/admin/yard2', name: 'Yard2'}
-          ]
-         },
-        { path: '/admin/transportlog', name: 'Transport Log', icon: 'ti-receipt' },
-        { path: '/admin/driverlist', name: 'Driver List', icon: 'ti-id-badge' },
-        { path: '/admin/assignedmanagement', name: 'AssignedManagement', icon: 'ti-truck'}
+            { path: "/admin/yard1", name: "HOU_YARD_0001" },
+            { path: "/admin/yard2", name: "HOU_YARD_0002" },
+            { path: "/admin/yard3", name: "LA_YARD_0001" },
+            { path: "/admin/yard4", name: "LA_YARD_0002" },
+            { path: "/admin/yard5", name: "MOB_YARD_0001" },
+            { path: "/admin/yard6", name: "MOB_YARD_0002" },
+            { path: "/admin/yard7", name: "PHX_YARD_0001" },
+            { path: "/admin/yard8", name: "PHX_YARD_0002" },
+            { path: "/admin/yard9", name: "SAV_YARD_0001" },
+            { path: "/admin/yard10", name: "SAV_YARD_0002" },
+          ],
+        },
+        {
+          path: "/admin/transportlog",
+          name: "Transport Log",
+          icon: "ti-receipt",
+        },
+        { path: "/admin/driverlist", name: "Driver List", icon: "ti-id-badge" },
+        {
+          path: "/admin/assignedmanagement",
+          name: "AssignedManagement",
+          icon: "ti-truck",
+        },
       ],
-    }
+    };
   },
   components: {
     TopNavbar,
