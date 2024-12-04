@@ -1,11 +1,16 @@
-<!-- src/pages/Division.vue -->
 <template>
   <div class="division-page">
     <h2>Division</h2>
     <p>Select a Yard to view its location on the map.</p>
 
+    <!-- Yard 리스트 -->
     <ul class="yard-list">
-      <li class="yard-item" v-for="yard in yards" :key="yard.name" @click="selectYard(yard)">
+      <li
+        class="yard-item"
+        v-for="yard in yards"
+        :key="yard.name"
+        @click="selectYard(yard)"
+      >
         <span>{{ yard.name }}</span>
       </li>
     </ul>
@@ -23,28 +28,28 @@ export default {
       map: null,
       marker: null,
       yards: [
-        { name: "Yard 1", lat: 37.7749, lng: -122.4194 }, // 샘플 좌표 (샌프란시스코)
-        { name: "Yard 2", lat: 34.0522, lng: -118.2437 }, // 샘플 좌표 (로스앤젤레스)
-        { name: "Yard 3", lat: 40.7128, lng: -74.006 }, // 샘플 좌표 (뉴욕)
+        { name: "Yard 1", lat: 29.7559, lng: -95.4015 }, // 휴스턴 좌표
+        { name: "Yard 2", lat: 29.7559, lng: -95.4015 }, // 휴스턴 좌표
+        { name: "Yard 3", lat: 34.0522, lng: -118.2437 }, // 로스엔젤레스 좌표
       ],
       selectedYard: null,
     };
   },
   mounted() {
-    // Google Maps API 스크립트 로드
-    // if (!window.google) {
-    //   const script = document.createElement("script");
-    //   script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHFKEJ_NU8CbNjFOtOgE4A73cv2phjkpo&callback=initMap`;
-    //   script.async = true;
-    //   window.initMap = this.initMap;
-    //   document.head.appendChild(script);
-    // } else {
-    //   this.initMap();
-    // }
+    // Google Maps API 스크립트 로드 (이미 로드되어 있으면 생략 가능)
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHFKEJ_NU8CbNjFOtOgE4A73cv2phjkpo&callback=initMap`;
+      script.async = true;
+      window.initMap = this.initMap;
+      document.head.appendChild(script);
+    } else {
+      this.initMap();
+    }
   },
   methods: {
     initMap() {
-      // 기본 지도 설정 (처음엔 첫 번째 Yard 위치로 설정)
+      // 기본 지도 설정 (처음에는 Yard 1 위치로 설정)
       this.map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: this.yards[0].lat, lng: this.yards[0].lng },
         zoom: 8,
@@ -56,8 +61,8 @@ export default {
     },
     selectYard(yard) {
       this.selectedYard = yard;
-      this.map.setCenter({ lat: yard.lat, lng: yard.lng });
-      this.updateMarker();
+      this.map.setCenter({ lat: yard.lat, lng: yard.lng }); // 지도 중심을 클릭한 Yard로 이동
+      this.updateMarker(); // 마커 위치 갱신
     },
     updateMarker() {
       // 기존 마커 제거
