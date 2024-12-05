@@ -16,7 +16,10 @@ app = Flask(
     static_folder="templates/dist",
     template_folder="templates/dist"
 )
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:1234@34.22.67.132/YMS_db'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:user_password@dbp_mysql_server/YMS_db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:1234@34.22.67.132/YMS_db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
