@@ -156,17 +156,17 @@ CREATE TABLE Password (
 -- Tranport_Log 테이블 생성
 CREATE TABLE Transport_Log (
     Log_ID INT NOT NULL AUTO_INCREMENT,
-    Driver_ID VARCHAR(20) NOT NULL,
-    Container_ID VARCHAR(20) NOT NULL,
-    Chassis_ID VARCHAR(10) NOT NULL,
-    Truck_ID VARCHAR(10) NOT NULL,
-    Trailer_ID VARCHAR(10) NOT NULL,
-    Depart_Zone_ID VARCHAR(30) NOT NULL,
+    Driver_ID VARCHAR(20) NULL,
+    Container_ID VARCHAR(20) NULL,
+    Chassis_ID VARCHAR(10) NULL,
+    Truck_ID VARCHAR(10) NULL,
+    Trailer_ID VARCHAR(10) NULL,
+    Depart_Zone_ID VARCHAR(30) NULL,
     Depart_Date DATE NULL,
-    Arrive_Zone_ID VARCHAR(30) NOT NULL,
+    Arrive_Zone_ID VARCHAR(30)NULL,
     Arrive_Date DATE NULL,
     Assigned Boolean NULL,
-    Log_Memo VARCHAR(60) NULL,
+    Log_Memo VARCHAR(200) NULL,
     PRIMARY KEY (Log_ID),
     FOREIGN KEY (Driver_ID) REFERENCES Driver(User_ID),
     FOREIGN KEY (Container_ID) REFERENCES Container(Container_ID),
@@ -531,28 +531,45 @@ SELECT
     User_ID, User_ID -- User_ID를 그대로 Password로 사용
 FROM User;
 
+
+
+
 -- Transport_Log 데이터 삽입
 INSERT INTO Transport_Log (
     Driver_ID, Container_ID, Chassis_ID, Truck_ID, Trailer_ID, 
     Depart_Zone_ID, Depart_Date, Arrive_Zone_ID, Arrive_Date, Assigned, Log_Memo
 )
 SELECT 
-    CONCAT('driver', LPAD(t.num, 3, '0')) AS Driver_ID,
-    CONCAT('CT_', LPAD(t.num, 4, '0')) AS Container_ID,
-    CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID,
-    CONCAT('TL_', LPAD(t.num, 4, '0')) AS Trailer_ID,
-    CONCAT('C_ZONE_', LPAD(t.num, 4, '0')) AS Depart_Zone_ID,
-    DATE_ADD(CURDATE(), INTERVAL t.num DAY) AS Depart_Date,
-    CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Arrive_Zone_ID,
-    DATE_ADD(CURDATE(), INTERVAL t.num + 1 DAY) AS Arrive_Date,
+    CONCAT('driver', LPAD(MOD(t.num - 1, 6) + 1, 3, '0')) AS Driver_ID, -- Driver_ID 순환
+    CASE 
+        WHEN MOD(t.num, 4) = 1 OR MOD(t.num, 4) = 2 THEN CONCAT('CT_', LPAD(t.num, 4, '0')) -- Container가 있는 경우
+        ELSE NULL -- Trailer가 있는 경우 NULL
+    END AS Container_ID,
+    CASE 
+        WHEN MOD(t.num, 4) = 2 THEN CONCAT('C_', LPAD(t.num, 4, '0')) -- Chassis는 Container와 함께 사용
+        ELSE NULL -- 나머지 경우 NULL
+    END AS Chassis_ID,
+    CONCAT('T_', LPAD(MOD(t.num - 1, 6) + 1, 4, '0')) AS Truck_ID, -- Truck_ID는 항상 존재
+    CASE 
+        WHEN MOD(t.num, 4) = 0 THEN CONCAT('TL_', LPAD(t.num, 4, '0')) -- Trailer가 있는 경우
+        ELSE NULL -- Trailer가 없는 경우 NULL
+    END AS Trailer_ID,
+    CONCAT('C_ZONE_', LPAD(t.num, 4, '0')) AS Depart_Zone_ID, -- 출발 Zone
+    DATE_ADD(CURDATE(), INTERVAL t.num DAY) AS Depart_Date, -- 출발 날짜
+    CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Arrive_Zone_ID, -- 도착 Zone
+    DATE_ADD(CURDATE(), INTERVAL t.num + 1 DAY) AS Arrive_Date, -- 도착 날짜
     CASE
-        WHEN MOD(t.num, 2) = 0 THEN TRUE -- t.num이 짝수이면 TRUE
-        ELSE FALSE                      -- t.num이 홀수이면 FALSE
+        WHEN MOD(t.num, 2) = 0 THEN TRUE -- 짝수일 경우 Assigned = TRUE
+        ELSE FALSE -- 홀수일 경우 Assigned = FALSE
     END AS Assigned,
-    CONCAT('Transport log entry #', t.num) AS Log_Memo
+    CONCAT('Transport log entry #', t.num) AS Log_Memo -- 로그 메모
 FROM (
+    -- 숫자 1부터 20까지 생성
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
-) t;
-
-
+    UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12
+    UNION SELECT 13 UNION SELECT 14 UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18
+    UNION SELECT 19 UNION SELECT 20
+) t
+WHERE CONCAT('T_', LPAD(MOD(t.num - 1, 6) + 1, 4, '0')) IN (
+    SELECT Truck_ID FROM Truck -- Truck 테이블의 Truck_ID를 참조
+);

@@ -104,7 +104,7 @@ def login():
 
 
 # Transport_Log 데이터를 반환하는 API
-@app.route('/api/transport_logs', methods=['GET'])
+@app.route('/api/transport_logs/get_logs', methods=['GET'])
 def get_transport_logs():
     try:
         result = db.session.execute(text("""
@@ -117,8 +117,10 @@ def get_transport_logs():
                     WHEN CURDATE() > Arrive_Date THEN 'Completed'
                     ELSE 'Scheduled'
                 END AS status,
-                DATEDIFF(Arrive_Date, Depart_Date) * 50 AS distance,
-                Depart_Date AS date
+                Depart_Date AS date,
+                Log_Memo AS memo,
+                Depart_Zone_ID AS departZone,
+                Arrive_Zone_ID AS arriveZone                                                  
             FROM Transport_Log
         """))
         logs = [dict(row._mapping) for row in result]
