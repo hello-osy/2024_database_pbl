@@ -330,6 +330,27 @@ def test_db_connection():
         return jsonify({"status": "not connected", "error": str(e)}), 500
 
 
+@app.route('/api/transport_logs/assigned', methods=['GET'])
+def get_assigned_transport_logs():
+    try:
+        result = db.session.execute(text("""
+            SELECT 
+                Log_ID AS id,
+                Depart_Zone_ID AS depart_zone,
+                Arrive_Zone_ID AS arrive_zone,
+                Driver_ID AS driver_id,
+                Assigned AS assigned,
+                Depart_Date AS depart_date,
+                Arrive_Date AS arrive_date
+            FROM Transport_Log
+            WHERE Assigned = TRUE
+        """))
+        logs = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": logs})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

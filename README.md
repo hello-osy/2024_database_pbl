@@ -218,8 +218,8 @@ docker-compose up -b --build
 #### dbp_mysql_server 접속
 
 ```bash
-docker exec -it mysql_server mysql -u root -p		# root 계정 접속
-docker exec -it mysql_server mysql -u user -p		# user 계정 접속
+docker exec -it dbp_mysql_server mysql -u root -p		# root 계정 접속
+docker exec -it dbp_mysql_server mysql -u user -p		# user 계정 접속
 ```
 
 root password : roow_password

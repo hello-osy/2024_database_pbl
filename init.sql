@@ -165,6 +165,7 @@ CREATE TABLE Transport_Log (
     Depart_Date DATE NULL,
     Arrive_Zone_ID VARCHAR(30) NOT NULL,
     Arrive_Date DATE NULL,
+    Assigned Boolean NULL,
     Log_Memo VARCHAR(60) NULL,
     PRIMARY KEY (Log_ID),
     FOREIGN KEY (Driver_ID) REFERENCES Driver(User_ID),
@@ -533,7 +534,7 @@ FROM User;
 -- Transport_Log 데이터 삽입
 INSERT INTO Transport_Log (
     Driver_ID, Container_ID, Chassis_ID, Truck_ID, Trailer_ID, 
-    Depart_Zone_ID, Depart_Date, Arrive_Zone_ID, Arrive_Date, Log_Memo
+    Depart_Zone_ID, Depart_Date, Arrive_Zone_ID, Arrive_Date, Assigned, Log_Memo
 )
 SELECT 
     CONCAT('driver', LPAD(t.num, 3, '0')) AS Driver_ID,
@@ -545,6 +546,10 @@ SELECT
     DATE_ADD(CURDATE(), INTERVAL t.num DAY) AS Depart_Date,
     CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Arrive_Zone_ID,
     DATE_ADD(CURDATE(), INTERVAL t.num + 1 DAY) AS Arrive_Date,
+    CASE
+        WHEN MOD(t.num, 2) = 0 THEN TRUE -- t.num이 짝수이면 TRUE
+        ELSE FALSE                      -- t.num이 홀수이면 FALSE
+    END AS Assigned,
     CONCAT('Transport log entry #', t.num) AS Log_Memo
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
