@@ -102,6 +102,57 @@ def login():
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    role_id = data.get('role_id')  # 클라이언트에서 전달한 Role ID
+
+    if not username or not password or not role_id:
+        return jsonify({"success": False, "message": "Invalid input"}), 400
+
+    try:
+        # User 테이블에 데이터 삽입
+        print(f"Inserting into User: username={username}, role_id={role_id}")
+        db.session.execute(text("""
+            INSERT INTO User (User_ID, UserName, Role_ID)
+            VALUES (:username, :username, :role_id)
+        """), {"username": username, "role_id": role_id})
+
+        # Password 테이블에 데이터 삽입
+        print(f"Inserting into Password: username={username}")
+        db.session.execute(text("""
+            INSERT INTO Password (User_ID, Password)
+            VALUES (:username, :password)
+        """), {"username": username, "password": password})
+
+        # 역할에 따라 Manager 또는 Driver 테이블에 데이터 삽입
+        if role_id == 1:  # Manager
+            print(f"Inserting into Manager: username={username}")
+            db.session.execute(text("""
+                INSERT INTO Manager (User_ID)
+                VALUES (:username)
+            """), {"username": username})
+
+        elif role_id == 2:  # Driver
+            print(f"Inserting into Driver: username={username}")
+            db.session.execute(text("""
+                INSERT INTO Driver (User_ID, Current_Status)
+                VALUES (:username, 'Available')
+            """), {"username": username})
+
+        # 데이터베이스 커밋
+        db.session.commit()
+        print("Sign-up successful")
+        return jsonify({"success": True, "message": "Sign-up successful"}), 201
+
+    except Exception as e:
+        # 에러 출력
+        db.session.rollback()
+        print(f"Error during sign-up: {e}")
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
 
 # Transport_Log 데이터를 반환하는 API
 @app.route('/api/transport_logs/get_logs', methods=['GET'])

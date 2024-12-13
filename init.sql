@@ -125,10 +125,10 @@ CREATE TABLE User (
 -- Driver 테이블 생성
 CREATE TABLE Driver (
     User_ID VARCHAR(20) NOT NULL,
-    Current_Location VARCHAR(20) NULL,
-    Current_Status VARCHAR(20) NULL,
-    Private_Truck_Info VARCHAR(20) NULL,
-    Truck_ID VARCHAR(10) NOT NULL,
+    Current_Location VARCHAR(20) DEFAULT NULL,
+    Current_Status VARCHAR(20) DEFAULT NULL,
+    Private_Truck_Info VARCHAR(20) DEFAULT NULL,
+    Truck_ID VARCHAR(10) DEFAULT 'UNASSIGNED',
     PRIMARY KEY (User_ID),
     FOREIGN KEY (User_ID) REFERENCES User(User_ID),
     FOREIGN KEY (Truck_ID) REFERENCES Truck(Truck_ID)
@@ -137,9 +137,9 @@ CREATE TABLE Driver (
 -- Manager 테이블 생성
 CREATE TABLE Manager (
     User_ID VARCHAR(20) NOT NULL,
-    Position VARCHAR(50) NULL,
-    Office_Phone VARCHAR(20) NULL,
-    Division_ID VARCHAR(10) NOT NULL,
+    Position VARCHAR(50) DEFAULT NULL,
+    Office_Phone VARCHAR(20) DEFAULT NULL,
+    Division_ID VARCHAR(10) DEFAULT 'LA',
     PRIMARY KEY (User_ID),
     FOREIGN KEY (User_ID) REFERENCES User(User_ID),
     FOREIGN KEY (Division_ID) REFERENCES Division(Division_ID)

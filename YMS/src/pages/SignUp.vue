@@ -10,8 +10,8 @@
       <!-- 입력 필드 -->
       <label for="role">Role</label>
       <select id="role" v-model="role" required>
-        <option value="Manager">Manager</option>
-        <option value="Driver">Driver</option>
+        <option value="1">Manager</option>
+        <option value="2">Driver</option>
       </select>
 
       <label for="username">Username</label>
@@ -32,27 +32,38 @@
 
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
       username: "",
       password: "",
+      role: "",
     };
   },
   methods: {
-    handleSignUp() {
-      const newUser = { username: this.username, password: this.password };
-      const users = JSON.parse(localStorage.getItem("users")) || [];
-      console.log("Before adding new user:", users);
+    async handleSignUp() {
+      try {
+        const response = await axios.post("http://localhost:8080/api/signup", {
+          username: this.username,
+          password: this.password,
+          role_id: this.role,
+        });
 
-      users.push(newUser);
-      localStorage.setItem("users", JSON.stringify(users));
-
-      console.log("After adding new user:", users);
-      alert("Sign-up successful!");
-      this.$router.push({ name: "login" });
+        if (response.data.success) {
+          alert("Sign-up successful!");
+          this.$router.push({ name: "login" });
+        } else {
+          alert(response.data.message || "Sign-up failed");
+        }
+      } catch (error) {
+        console.error("Sign-up error:", error);
+        alert("An error occurred during sign-up");
+      }
     },
   },
 };
 </script>
+
 <style></style>
