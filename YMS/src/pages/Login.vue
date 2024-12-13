@@ -58,6 +58,9 @@ export default {
           password: this.password,
         });
         if (response.data.success) {
+          // JWT 토큰 저장
+          const token = response.data.token; // 서버에서 반환하는 JWT 토큰
+          localStorage.setItem("token", token);
           localStorage.setItem("loggedIn", "true");
           // Role에 따라 리다이렉트
           if (response.data.role_id === 1) {
