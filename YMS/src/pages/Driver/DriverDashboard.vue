@@ -2,34 +2,34 @@
   <div class="dashboard">
     <!-- Header Section -->
     <div class="header">
-  <h1>Welcome, {{ driver.name }}!</h1>
-  <p class="status">
-    Current Status: <span :class="statusClass">{{ driver.status }}</span>
-  </p>
-  <div class="status-buttons">
-    <button
-      class="status-button available"
-      :disabled="driver.status === 'Available'"
-      @click="updateStatus('Available')"
-    >
-      Available
-    </button>
-    <button
-      class="status-button on-trip"
-      :disabled="driver.status === 'On a Trip'"
-      @click="updateStatus('On a Trip')"
-    >
-      On Trip
-    </button>
-    <button
-      class="status-button offline"
-      :disabled="driver.status === 'Offline'"
-      @click="updateStatus('Offline')"
-    >
-      Offline
-    </button>
-  </div>
-</div>
+      <h1>Welcome, {{ driver.name }}!</h1>
+      <p class="status">
+        Current Status: <span :class="statusClass">{{ driver.status }}</span>
+      </p>
+      <div class="status-buttons">
+        <button
+          class="status-button available"
+          :disabled="driver.status === 'Available'"
+          @click="updateStatus('Available')"
+        >
+          Available
+        </button>
+        <button
+          class="status-button on-trip"
+          :disabled="driver.status === 'On a Trip'"
+          @click="updateStatus('On a Trip')"
+        >
+          On Trip
+        </button>
+        <button
+          class="status-button offline"
+          :disabled="driver.status === 'Offline'"
+          @click="updateStatus('Offline')"
+        >
+          Offline
+        </button>
+      </div>
+    </div>
 
 
     <!-- Metrics Section -->
@@ -65,70 +65,59 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
-      driver: {
-        name: "John Doe",
-        status: "Available", // Default status
-        statuses: [
-          { status: "Available" },
-          { status: "On a Trip" },
-          { status: "Offline" },
-        ],
-      },
-      metrics: [
-        { label: "Trips completed", value: 120 },
-        { label: "Earnings (This Month)", value: "$19,000" },
-        { label: "Average Rating", value: 4.8 },
-      ],
-      upcomingTrip: {
-        pickup: "123 Elm Street",
-        dropoff: "426 Oak Avenue",
-        time: "Tomorrow, 10:00 AM",
-      },
-      notifications: [
-        { id: 1, message: "Your next trip is scheduled for tomorrow." },
-        { id: 2, message: "New earnings report available." },
-      ],
+      driver: null, // Driver details fetched from the server
+      metrics: [], // Metrics fetched from the server
+      upcomingTrip: null, // Upcoming trip fetched from the server
     };
   },
   computed: {
     statusClass() {
       // Dynamically assign classes based on driver status
+      if (!this.driver) return '';
       return {
         available: this.driver.status === "Available",
         "on-trip": this.driver.status === "On a Trip",
         offline: this.driver.status === "Offline",
       };
     },
-    toggleStatusText() {
-      // Change button text based on driver status
-      return this.driver.status === "Available" ? "Go Offline" : "Go Online";
-    },
   },
   methods: {
-    changeStatus() {
-      // Toggle driver status between Available and Offline
-      this.driver.status =
-        this.driver.status === "Available" ? "Offline" : "Available";
-      console.log("Status changed:", this.driver.status);
-    },
-    initializeMap() {
-      // Add map initialization logic here
-      console.log("Initialize map with driver location.");
+    async fetchDashboardData() {
+      try {
+        // Fetch data from the API endpoint
+        const response = await axios.get("https://16fd9f40-e2d5-46d3-883a-42b645f53d54.mock.pstmn.io/driver/dashboard");
+        const data = response.data;
+
+        // Update component data with the response
+        this.driver = data.driver;
+        this.metrics = [
+          { label: "Trips completed", value: data.metrics.tripsCompleted },
+          { label: "Earnings", value: `$${data.metrics.earnings}` },
+          { label: "Average Rating", value: data.metrics.averageRating },
+        ];
+        this.upcomingTrip = data.upcomingTrip || null;
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
     },
     updateStatus(newStatus) {
-    this.driver.status = newStatus;
-    console.log("Driver status updated to:", newStatus);
-  },
+      if (this.driver) {
+        this.driver.status = newStatus;
+        console.log("Driver status updated to:", newStatus);
+      }
+    },
   },
   mounted() {
-    // Initialize the map or fetch live location
-    this.initializeMap();
+    this.fetchDashboardData(); // Fetch data when the component is mounted
   },
 };
 </script>
+
 
 
 <style scoped>

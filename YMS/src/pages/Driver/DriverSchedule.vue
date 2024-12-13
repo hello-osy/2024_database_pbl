@@ -14,7 +14,6 @@
         <option value="cancelled">Cancelled</option>
       </select>
     </div>
-
       <!-- New Trips -->
       <div class="schedule-section" v-if="newTrips.length">
         <h2>New Trips</h2>
@@ -33,7 +32,7 @@
     <div class="content">
       <!-- Filtered Trips -->
       <div class="schedule-section" v-if="filteredTrips.length">
-        <div class="trip" v-for="trip in filteredTrips" :key="trip.id">
+        <div class="trip" v-for="trip in filteredTrips" :key="trip.id" :class="{ accepted: trip.isAccepted}">
           <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
           <p><strong>Date:</strong> {{ trip.date }}</p>
           <p><strong>Time:</strong> {{ trip.time }}</p>
@@ -58,41 +57,8 @@ export default {
   data() {
     return {
       filterStatus: "all", // Default filter
-      trips: [
-        { 
-          id: 1,
-          pickup: "Location A",
-          dropoff: "Location B",
-          date: "2024-11-22",
-          time: "10:00 AM",
-          status: "upcoming",
-        },
-        {
-          id: 2,
-          pickup: "Location C",
-          dropoff: "Location D",
-          date: "2024-11-23",
-          time: "2:00 PM",
-          status: "completed",
-        },
-        {
-          id: 3,
-          pickup: "Location E",
-          dropoff: "Location F",
-          date: "2024-11-24",
-          time: "11:00 AM",
-          status: "cancelled",
-        },
-      ],
-      newTrips: [
-        {
-          id: 4,
-          pickup: "Location G",
-          dropoff: "Location H",
-          date: "2024-11-25",
-          time: "9:00 AM",
-        },
-      ], // Store new trips assigned by the manager
+      trips: [], // Will be populated dynamically
+      newTrips: [], // Will be populated dynamically
     };
   },
   computed: {
@@ -104,11 +70,27 @@ export default {
     },
   },
   methods: {
+    async fetchTrips() {
+      try {
+        const response = await fetch(
+          "https://16fd9f40-e2d5-46d3-883a-42b645f53d54.mock.pstmn.io/driver/schedule"
+        );
+        const data = await response.json();
+        if (data.success) {
+          this.trips = data.trips.sort((a, b) => new Date(b.date) - new Date(a.date));
+          this.newTrips = data.newTrips.sort((a, b) => new Date(b.date) - new Date(a.date));
+        } else {
+          alert("Failed to fetch trips.");
+        }
+      } catch (error) {
+        console.error("Error fetching trips:", error);
+        alert("An error occurred while fetching trips.");
+      }
+    },
     markCompleted(tripId) {
-      // Find the trip and update its status
       const tripIndex = this.trips.findIndex((t) => t.id === tripId);
       if (tripIndex !== -1) {
-        const updatedTrip = { ...this.trips[tripIndex], status: "completed" };
+        const updatedTrip = { ...this.trips[tripIndex], status: "completed", isAccepted: false};
         this.trips.splice(tripIndex, 1, updatedTrip); // Replace with updated trip
         alert(`Trip has been marked as completed.`);
       } else {
@@ -120,12 +102,16 @@ export default {
       if (tripIndex !== -1) {
         const trip = this.newTrips.splice(tripIndex, 1)[0];
         trip.status = "upcoming";
+        trip.isAccepted = true;
         this.trips.push(trip);
       }
     },
     declineTrip(tripId) {
       this.newTrips = this.newTrips.filter((t) => t.id !== tripId);
     },
+  },
+  mounted() {
+    this.fetchTrips();
   },
 };
 </script>
@@ -211,6 +197,13 @@ export default {
   margin: 3px 0;
   font-size: 14px;
   color: #555;
+}
+
+/* In Progress Trip */
+.trip.accepted{
+  background-color: #e8f5e9;
+  border-left: 5px solid #4caf50;
+  padding-left: 10px;
 }
 
 /* No Trips Message */

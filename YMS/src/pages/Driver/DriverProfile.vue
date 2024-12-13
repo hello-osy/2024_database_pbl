@@ -1,12 +1,12 @@
 <template>
-  <div class="profile-page">
+  <div class="profile-page" v-if="driver && stats">
     <!-- Header Section -->
     <div class="header">
       <div class="profile-picture">
         <!-- Display Asset Image -->
         <label for="upload-picture">
           <img
-            :src="driver.picture"
+            :src="driver.picture || defaultPicture"
             alt="Driver Profile Picture"
             class="profile-image"
           />
@@ -20,8 +20,8 @@
           style="display: none;"
         />
       </div>
-      <h1>  {{ driver.name }}</h1>
-      <p> Click on the picture for change profile-picture</p>
+      <h1>{{ driver.name }}</h1>
+      <p>Click on the picture to change profile picture</p>
       <br />
     </div>
 
@@ -31,7 +31,6 @@
       <ul>
         <li><strong>Phone:</strong> {{ driver.phone }}</li>
         <li><strong>Email:</strong> {{ driver.email }}</li>
-        <li><strong>Address:</strong> {{ driver.address }}</li>
       </ul>
     </div>
 
@@ -51,32 +50,47 @@
       <button @click="navigateToEditProfile">Edit My Profile</button>
     </div>
   </div>
+  <div v-else>
+    <p>Loading profile...</p>
+  </div>
 </template>
 
 <script>
-
-import driverImage from "@/assets/img/driver-profile03.png";
+import axios from "axios";
+import defaultPicture from "@/assets/img/driver-profile03.png";
 
 export default {
   data() {
     return {
-      driver: {
-        name: "John Doe",
-        picture: require("@/assets/img/driver-profile03.png"), // Load asset image using require
-        phone: "123-456-7890",
-        email: "john.doe@example.com",
-        address: "123 Elm Street, Springfield",
-        vehicle: "Truck",
-        licensePlate: "XYZ-123",
-        status: "Available",
-      },
-      stats: {
-        tripsCompleted: 120,
-        rating: 4.8,
-      },
+      driver: null, // Data fetched from mock server
+      stats: null, // Stats fetched from mock server
+      defaultPicture: defaultPicture, // Fallback image
     };
   },
   methods: {
+    async fetchProfileData() {
+      try {
+        const response = await axios.get("https://16fd9f40-e2d5-46d3-883a-42b645f53d54.mock.pstmn.io/driver/profile");
+        const data = response.data.driver;
+
+      // Map mock server response to driver and stats
+      this.driver = {
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        vehicle: data.assignedVehicle,
+        licensePlate: data.licensePlate,
+        picture: null, // Add default picture or fetch dynamically
+      };
+      this.stats = {
+        tripsCompleted: data.tripsCompleted,
+        rating: data.averageRating,
+      };
+      } catch (error) {
+      console.error("Error fetching profile data:", error);
+      }
+    },
+
     onImageChange(event) {
       const file = event.target.files[0];
       if (file) {
@@ -91,8 +105,13 @@ export default {
       this.$router.push({ name: "EditProfile" });
     },
   },
+  mounted() {
+    // Fetch data when the component is mounted
+    this.fetchProfileData();
+  },
 };
 </script>
+
 
 
 <style scoped>

@@ -1,79 +1,113 @@
 <template>
     <div class="edit-profile-container">
       <h1>Edit Profile</h1>
-      <form @submit.prevent="handleSubmit"> 
-        <label> Email: </label>
-        <input type="email" required v-model="email">
+      <form @submit.prevent="handleSubmit">
+        <label>Email:</label>
+        <input type="email" required v-model="email" />
   
-        <label> Password: </label>
-        <input type="password" required v-model="password">
+        <label>Password:</label>
+        <input type="password" required v-model="password" />
         <div v-if="passwordError" class="error">{{ passwordError }}</div>
-        
-        <label>Phone Number </label>
-        <input type="phone" v-model="tempSkill" @keyup="addSkill">
-
-        <label>Address </label>
-        <input type="text" v-model="tempSkill" @keyup="addSkill">
-    
-        <label>License Plate </label>
-        <input type="text" v-model="tempSkill" @keyup="addSkill">
-    
+  
+        <label>License Plate:</label>
+        <input
+          type="text"
+          required
+          v-model="licensePlate"
+          @input="validateLicensePlate"
+        />
+        <div v-if="licensePlateError" class="error">{{ licensePlateError }}</div>
+  
+        <!-- Select Box for Truck Type -->
+        <label>Truck Type:</label>
+        <select v-model="truckType" required>
+          <option value="" disabled>Select truck type</option>
+          <option value="private">Private truck</option>
+          <option value="company">Company truck</option>
+        </select>
+        <div v-if="truckTypeError" class="error">{{ truckTypeError }}</div>
+  
+        <label>Phone Number:</label>
+        <input
+          type="text"
+          required
+          v-model="phoneNumber"
+          @input="validatePhoneNumber"
+        />
+        <div v-if="phoneError" class="error">{{ phoneError }}</div>
   
         <div class="terms">
-            <input type="checkbox" required v-model="terms">
-            <label> Accept terms and conditions </label>
+          <input type="checkbox" required v-model="terms" />
+          <label>Accept terms and conditions</label>
+          <div v-if="termsError" class="error">{{ termsError }}</div>
         </div>
   
         <div class="submit">
-            <button>Save</button>
+          <button type="submit">Save</button>
         </div>
       </form>
     </div>
 </template>
   
-    
 <script>
-    export default {
-        data() {
-            return {
-                email: '',
-                password: '',
-                terms: false,
-                tempSkill: '',
-                skills: [], 
-                passwordError: ''
-            }
-        },
-        methods: {
-            addSkill(e) {
-                // console.log(e)
-                if (e.key === 'Enter' && this.tempSkill){
-                    if(!this.skills.includes(this.tempSkill)){
-                        this.skills.push(this.tempSkill)
-                    }
-                    this.tempSkill = ''
-                }
-            },
-            deleteSkill(skill) {
-                this.skills = this.skills.filter((item) => {
-                    return skill !== item
-                })
-            },
-            handleSubmit() {
-                console.log('Form submitted')
-                // alert('Information has changed')
-                this.passwordError = this.password.length < 4 ? 'Password must be at least 4 chars long' : ''
-    
-                if(!this.passwordError) {
-                    console.log('Email: ', this.email)
-                    console.log('Password: ', this.password)
-                    alert('Information changed')
-                }
-            }
+  export default {
+    data() {
+      return {
+        email: "",
+        password: "",
+        licensePlate: "",
+        truckType: "", // Truck type select box value
+        phoneNumber: "",
+        terms: false,
+        passwordError: "",
+        licensePlateError: "",
+        truckTypeError: "",
+        phoneError: "",
+        termsError: "",
+      };
+    },
+    methods: {
+      validatePhoneNumber() {
+        const phoneRegex = /^[0-9]{10,15}$/; // Example: 10-15 digits
+        this.phoneError = phoneRegex.test(this.phoneNumber)
+          ? ""
+          : "Invalid phone number.";
+      },
+      validateLicensePlate() {
+        const licensePlateRegex = /^[A-Za-z0-9\s-]{1,10}$/; // Adjust pattern as needed
+        this.licensePlateError = licensePlateRegex.test(this.licensePlate)
+          ? ""
+          : "Invalid license plate format.";
+      },
+      handleSubmit() {
+        this.passwordError =
+          this.password.length < 4
+            ? "Password must be at least 4 characters long."
+            : "";
+  
+        this.licensePlateError = this.licensePlate ? "" : "License plate is required.";
+        this.truckTypeError = this.truckType ? "" : "Please select a truck type.";
+        this.termsError = this.terms ? "" : "You must accept the terms.";
+  
+        if (
+          !this.passwordError &&
+          !this.licensePlateError &&
+          !this.truckTypeError &&
+          !this.phoneError &&
+          !this.termsError
+        ) {
+          console.log("Email:", this.email);
+          console.log("Password:", this.password);
+          console.log("License Plate:", this.licensePlate);
+          console.log("Truck Type:", this.truckType);
+          console.log("Phone Number:", this.phoneNumber);
+          alert("Information saved successfully!");
         }
-    }
+      },
+    },
+  };
 </script>
-    
+  
 <style scoped>
      form {
         max-width: 420px;
