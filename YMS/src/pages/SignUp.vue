@@ -10,6 +10,7 @@
       <!-- 입력 필드 -->
       <label for="role">Role</label>
       <select id="role" v-model="role" required>
+        <option disabled value="">Select a role</option> <!-- 선택 강제 -->
         <option value="1">Manager</option>
         <option value="2">Driver</option>
       </select>
@@ -44,6 +45,11 @@ export default {
   },
   methods: {
     async handleSignUp() {
+      // 입력된 데이터 콘솔에 출력
+      console.log("Sign-up attempt with:");
+      console.log("Username:", this.username);
+      console.log("Password:", this.password);
+      console.log("Role ID:", this.role, "(Type:", typeof this.role, ")");
       try {
         const response = await axios.post("http://localhost:8080/api/signup", {
           username: this.username,

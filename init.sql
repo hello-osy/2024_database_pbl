@@ -128,7 +128,7 @@ CREATE TABLE Driver (
     Current_Location VARCHAR(20) DEFAULT NULL,
     Current_Status VARCHAR(20) DEFAULT NULL,
     Private_Truck_Info VARCHAR(20) DEFAULT NULL,
-    Truck_ID VARCHAR(10) DEFAULT 'UNASSIGNED',
+    Truck_ID VARCHAR(10) DEFAULT 'T_0001',
     PRIMARY KEY (User_ID),
     FOREIGN KEY (User_ID) REFERENCES User(User_ID),
     FOREIGN KEY (Truck_ID) REFERENCES Truck(Truck_ID)

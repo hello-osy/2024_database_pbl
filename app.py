@@ -128,18 +128,18 @@ def signup():
         """), {"username": username, "password": password})
 
         # 역할에 따라 Manager 또는 Driver 테이블에 데이터 삽입
-        if role_id == 1:  # Manager
+        if role_id == '1':  # Manager
             print(f"Inserting into Manager: username={username}")
             db.session.execute(text("""
                 INSERT INTO Manager (User_ID)
                 VALUES (:username)
             """), {"username": username})
 
-        elif role_id == 2:  # Driver
+        elif role_id == '2':  # Driver
             print(f"Inserting into Driver: username={username}")
             db.session.execute(text("""
-                INSERT INTO Driver (User_ID, Current_Status)
-                VALUES (:username, 'Available')
+                INSERT INTO Driver (User_ID)
+                VALUES (:username)
             """), {"username": username})
 
         # 데이터베이스 커밋
