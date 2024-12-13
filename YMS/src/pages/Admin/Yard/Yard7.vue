@@ -1,5 +1,5 @@
 <template>
-  <Yard :yardId="'LA_YARD_0001'" />
+  <Yard :yardId="'PHX_YARD_0001'" />
 </template>
 
 <script>

@@ -1,8 +1,7 @@
-<!-- src/views/DriverProfiles.vue -->
 <template>
   <div class="driver-profiles">
     <h2>Driver Profiles</h2>
-    <p>Explore profiles of various drivers.</p>
+    <p>Explore profiles of various drivers from the database.</p>
 
     <!-- 검색 입력 -->
     <input
@@ -21,64 +20,54 @@
       v-for="driver in filteredDrivers"
       :key="driver.id"
     >
-      <img :src="driver.image" alt="Driver Image" class="profile-image" />
       <div class="profile-details">
         <h3 class="profile-name">{{ driver.name }}</h3>
-        <p class="profile-bio">{{ driver.bio }}</p>
-        <div class="profile-stats">
-          <div class="stat-item">
-            <span class="stat-value">{{ driver.rating }}</span>
-            <span class="stat-label">Rating</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-value">{{ driver.experience }} yrs</span>
-            <span class="stat-label">Experience</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-value">{{ driver.rides }}</span>
-            <span class="stat-label">Rides</span>
-          </div>
-        </div>
+        <p class="profile-location">Location: {{ driver.current_location }}</p>
+        <p class="profile-status">Status: {{ driver.current_status }}</p>
+        <p class="profile-truck-info">
+          Private Truck: {{ driver.private_truck_info }}
+        </p>
+        <p class="profile-truck-id">Truck ID: {{ driver.truck_id }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "DriverProfiles",
   data() {
     return {
       searchQuery: "", // 검색어
-      drivers: [
-        {
-          id: 1,
-          name: "John Doe",
-          image: "https://via.placeholder.com/150",
-          bio: "Experienced driver with over 5 years of expertise in the industry.",
-          rating: 4.8,
-          experience: 5,
-          rides: 1200,
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          image: "https://via.placeholder.com/150",
-          bio: "Professional and friendly driver with a passion for safe travel.",
-          rating: 4.9,
-          experience: 7,
-          rides: 1500,
-        },
-        // 더 많은 드라이버 정보 추가 가능
-      ],
+      drivers: [], // 드라이버 데이터를 담을 배열
     };
   },
   computed: {
     filteredDrivers() {
-      return this.drivers.filter(driver =>
-        driver.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      return this.drivers.filter((driver) =>
+        driver.name.toLowerCase().includes(this.searchQuery.toLowerCase()),
       );
     },
+  },
+  methods: {
+    async fetchDrivers() {
+      try {
+        const response = await axios.get("http://localhost:8080/api/drivers");
+        if (response.data.success) {
+          this.drivers = response.data.data;
+        } else {
+          console.error("Error fetching drivers:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching drivers:", error.message);
+      }
+    },
+  },
+  mounted() {
+    // 컴포넌트 마운트 시 데이터 로드
+    this.fetchDrivers();
   },
 };
 </script>
@@ -91,87 +80,31 @@ export default {
   align-items: center;
 }
 
-h2 {
-  font-size: 2rem;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-p {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 30px;
-}
-
-.search-input {
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-  margin-bottom: 20px;
-  width: 100%;
-  max-width: 500px;
-}
-
 .profile-card {
-  display: flex;
-  background-color: #f9f9f9;
+  background: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin: 15px;
+  padding: 15px;
+  margin: 10px 0;
   width: 100%;
-  max-width: 500px;
-  transition: transform 0.2s;
-}
-
-.profile-card:hover {
-  transform: translateY(-5px);
-}
-
-.profile-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-right: 20px;
+  max-width: 400px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .profile-details {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  text-align: left;
 }
 
 .profile-name {
   font-size: 1.5rem;
   color: #333;
-  margin: 0;
 }
 
-.profile-bio {
+.profile-location,
+.profile-status,
+.profile-truck-info,
+.profile-truck-id {
   font-size: 1rem;
-  color: #666;
-  margin: 10px 0;
-}
-
-.profile-stats {
-  display: flex;
-  gap: 20px;
-  margin-top: 10px;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #888;
+  color: #555;
+  margin: 5px 0;
 }
 </style>

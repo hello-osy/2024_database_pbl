@@ -12,9 +12,16 @@ import DashBoard from "@/pages/Admin/DashBoard.vue";
 import DriverList from "@/pages/Admin/DriverList.vue";
 import TransportLog from "@/pages/Admin/TransportLog.vue";
 import AssignedManagement from "@/pages/Admin/AssignedManagement.vue";
-import Yard1 from "@/pages/Admin/Yard/Yard1.vue"
-import Yard2 from "@/pages/Admin/Yard/Yard2.vue"
-import Yard3 from "@/pages/Admin/Yard/Yard3.vue"
+import Yard1 from "@/pages/Admin/Yard/Yard1.vue";
+import Yard2 from "@/pages/Admin/Yard/Yard2.vue";
+import Yard3 from "@/pages/Admin/Yard/Yard3.vue";
+import Yard4 from "@/pages/Admin/Yard/Yard4.vue";
+import Yard5 from "@/pages/Admin/Yard/Yard5.vue";
+import Yard6 from "@/pages/Admin/Yard/Yard6.vue";
+import Yard7 from "@/pages/Admin/Yard/Yard7.vue";
+import Yard8 from "@/pages/Admin/Yard/Yard8.vue";
+import Yard9 from "@/pages/Admin/Yard/Yard9.vue";
+import Yard10 from "@/pages/Admin/Yard/Yard10.vue";
 
 // Driver pages
 import DriverDashboard from "@/pages/Driver/DriverDashboard.vue";
@@ -59,6 +66,41 @@ const routes = [
         component: Yard3,
       },
       {
+        path: "yard4",
+        name: "yard4",
+        component: Yard4,
+      },
+      {
+        path: "yard5",
+        name: "yard5",
+        component: Yard5,
+      },
+      {
+        path: "yard6",
+        name: "yard6",
+        component: Yard6,
+      },
+      {
+        path: "yard7",
+        name: "yard7",
+        component: Yard7,
+      },
+      {
+        path: "yard8",
+        name: "yard8",
+        component: Yard8,
+      },
+      {
+        path: "yard9",
+        name: "yard9",
+        component: Yard9,
+      },
+      {
+        path: "yard10",
+        name: "yard10",
+        component: Yard10,
+      },
+      {
         path: "driverlist",
         name: "DriverList",
         component: DriverList,
@@ -100,7 +142,7 @@ const routes = [
         name: "EditProfile",
         component: EditProfile,
       },
-    ]
+    ],
   },
   { path: "*", component: NotFound },
 ];

@@ -1,4 +1,5 @@
 <template>
+<!-- <<<<<<< HEAD -->
   <div class="yard-content">
     <div class="search-bar">
       <input v-model="searchQuery" type="text" placeholder="Search by ID (e.g., T_001, C_002)" />
@@ -369,3 +370,17 @@ export default {
   background-color: #c82333;
 }
 </style>
+<!-- =======
+  <Yard :yardId="'HOU_YARD_0001'" />
+</template>
+
+<script>
+import Yard from "@/pages/Admin/Yard/Yard.vue";
+
+export default {
+  components: {
+    Yard,
+  },
+};
+</script>
+>>>>>>> develop -->
