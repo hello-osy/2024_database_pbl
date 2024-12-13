@@ -82,7 +82,8 @@ export default {
     logout() {
       // 인증 상태 초기화
       localStorage.removeItem("loggedIn");
-      localStorage.removeItem("token"); // JWT 토큰 삭제
+      localStorage.removeItem("token");
+      localStorage.removeItem("user_id"); // 사용자 ID 삭제
       // 로그인 페이지로 리다이렉트
       window.location.href = "/login";
     },

@@ -58,10 +58,14 @@ export default {
           password: this.password,
         });
         if (response.data.success) {
-          // JWT 토큰 저장
-          const token = response.data.token; // 서버에서 반환하는 JWT 토큰
+          // JWT 토큰과 사용자 ID 저장
+          const token = response.data.token;
+          const userId = response.data.user_id;
+
           localStorage.setItem("token", token);
+          localStorage.setItem("user_id", userId);
           localStorage.setItem("loggedIn", "true");
+
           // Role에 따라 리다이렉트
           if (response.data.role_id === 1) {
             this.$router.push("/admin/dashboard"); // 매니저 페이지로 이동
