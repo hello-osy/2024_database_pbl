@@ -8,7 +8,6 @@
           <th>Depart Zone</th>
           <th>Arrive Zone</th>
           <th>Driver ID</th>
-          <th>Assigned</th>
           <th>Depart Date</th>
           <th>Arrive Date</th>
         </tr>
