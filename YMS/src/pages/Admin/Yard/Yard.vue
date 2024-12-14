@@ -52,14 +52,9 @@
 import axios from "axios";
 
 export default {
-  props: {
-    yardId: {
-      type: String,
-      required: true,
-    },
-  },
   data() {
     return {
+      yardId: "",
       searchQuery: "",
       statsCards: [
         { type: "warning", icon: "ti-server", title: "Total Zones", value: 50 },
@@ -86,6 +81,14 @@ export default {
     };
   },
   methods: {
+    // URL에서 yardId 추출
+    extractYardIdFromUrl() {
+      const fullPath = this.$route.fullPath; // 현재 URL 경로
+      const yardId = fullPath.split("/").pop(); // 마지막 경로 추출 (LA_YARD_0002)
+      this.yardId = yardId;
+      console.log("Extracted Yard ID:", this.yardId);
+    },
+
     async fetchYardData() {
       try {
         // Get sites data for specific yard
@@ -130,7 +133,18 @@ export default {
         .filter((site) => site !== null);
     },
   },
+  watch: {
+    // URL이 변경되면 이 감시자가 동작
+    $route: {
+      immediate: true, // 컴포넌트가 로드되었을 때도 실행
+      handler() {
+        this.extractYardIdFromUrl();
+        this.fetchYardData();
+      },
+    },
+  },
   mounted() {
+    this.extractYardIdFromUrl();
     this.fetchYardData();
   },
 };

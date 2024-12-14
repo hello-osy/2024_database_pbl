@@ -107,6 +107,7 @@ export default {
           const yardLinks = response.data.data.map((yard) => ({
             path: `/admin/yard/${yard.id}`, // 동적 경로
             name: yard.name, // Yard 이름
+            meta: { yardName: yard.name, yardId: yard.id }, // 추가 메타 데이터
           }));
 
           // "Dashboard" 링크의 children에 Yard 링크 추가

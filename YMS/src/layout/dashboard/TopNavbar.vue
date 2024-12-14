@@ -85,7 +85,7 @@ export default {
       localStorage.removeItem("token");
       localStorage.removeItem("user_id"); // 사용자 ID 삭제
       // 로그인 페이지로 리다이렉트
-      window.location.href = "/login";
+      window.location.href = "/#/";
     },
   },
 };

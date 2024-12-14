@@ -24,6 +24,7 @@ async function addDynamicRoutes() {
         name: `Yard${yard.id}`, // 라우트 이름
         component: () => import(`@/pages/Admin/Yard/Yard_reuse.vue`), // Vue 컴포넌트
         meta: { yardName: yard.name, yardId: yard.id }, // 메타 정보
+        props: true,
       }));
 
       // 동적 라우트 추가
