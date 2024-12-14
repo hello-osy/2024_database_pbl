@@ -129,6 +129,9 @@ CREATE TABLE Driver (
     Current_Status VARCHAR(20) DEFAULT NULL,
     Private_Truck_Info VARCHAR(20) DEFAULT NULL,
     Truck_ID VARCHAR(10) DEFAULT 'T_0001',
+    Trips_Completed INT DEFAULT 0,
+    Monthly_Earnings DECIMAL(10, 2) DEFAULT 0.00,
+    Average_Ratings DECIMAL(3, 2) DEFAULT 0.00,
     PRIMARY KEY (User_ID),
     FOREIGN KEY (User_ID) REFERENCES User(User_ID),
     FOREIGN KEY (Truck_ID) REFERENCES Truck(Truck_ID)
@@ -487,7 +490,7 @@ FROM (
 ) t;
 
 -- Driver 데이터 삽입
-INSERT INTO Driver (User_ID, Current_Location, Current_Status, Private_Truck_Info, Truck_ID)
+INSERT INTO Driver (User_ID, Current_Location, Current_Status, Private_Truck_Info, Truck_ID, Trips_Completed, Monthly_Earnings, Average_Ratings)
 SELECT 
     CONCAT('driver', LPAD(t.num, 3, '0')) AS User_ID,
     CASE 
@@ -499,7 +502,10 @@ SELECT
     END AS Current_Location,
     CASE WHEN t.num % 2 = 0 THEN 'In Use' ELSE 'Available' END AS Current_Status,
     CASE WHEN t.num % 3 = 0 THEN 'yes' ELSE 'no' END AS Private_Truck_Info,
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID
+    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID,
+    t.num * 10 AS Trips_Completed, -- 완료된 운송 횟수
+    t.num * 1000.50 AS Monthly_Earnings, -- 월 수익
+    ROUND(3 + (t.num % 5) * 0.4, 2) AS Average_Ratings -- 평균 평점
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
 ) t;

@@ -102,6 +102,198 @@ def login():
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
+@app.route('/api/driver-info', methods=['GET'])
+def get_driver_info():
+    print("Driver info API called")  # API 호출 로그
+    auth_header = request.headers.get('Authorization')
+    print(f"Authorization Header: {auth_header}")  # Authorization 헤더 값 출력
+
+    # Authorization 헤더 유효성 확인
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"success": False, "message": "Authorization header missing or invalid"}), 401
+
+    # 토큰 추출
+    token = auth_header.split(" ")[1]
+    try:
+        # JWT 디코딩
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        print(f"Decoded Payload: {payload}")  # 디코딩된 페이로드 출력
+
+        # DB 쿼리 실행
+        user_id = payload['user_id']
+        result = db.session.execute(text("""
+            SELECT 
+                d.User_ID, 
+                d.Current_Status, 
+                d.Current_Location, 
+                d.Private_Truck_Info, 
+                d.Truck_ID,
+                d.Trips_Completed,
+                d.Monthly_Earnings,
+                d.Average_Ratings,
+                u.UserName,
+                u.Email,
+                u.Phone_Number
+            FROM Driver d
+            JOIN User u ON d.User_ID = u.User_ID
+            WHERE d.User_ID = :user_id
+        """), {"user_id": user_id})
+        driver = result.fetchone()
+
+        if driver:
+            print(f"Driver found: {driver}")  # 드라이버 정보 출력
+            return jsonify({
+                "success": True,
+                "driver": {
+                    "user_id": driver._mapping['User_ID'],
+                    "name": driver._mapping['UserName'],
+                    "email": driver._mapping['Email'],
+                    "phone": driver._mapping['Phone_Number'],
+                    "status": driver._mapping['Current_Status'],
+                    "location": driver._mapping['Current_Location'],
+                    "truck_info": driver._mapping['Private_Truck_Info'],
+                    "truck_id": driver._mapping['Truck_ID'],
+                    "tripsCompleted": driver._mapping['Trips_Completed'],
+                    "monthlyEarnings": driver._mapping['Monthly_Earnings'],
+                    "averageRatings": driver._mapping['Average_Ratings']
+                }
+            })
+        else:
+            print("Driver not found")  # 드라이버 없음 로그
+            return jsonify({"success": False, "message": "Driver not found"}), 404
+
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")  # 토큰 만료 로그
+        return jsonify({"success": False, "message": "Token expired"}), 401
+    except jwt.InvalidTokenError as e:
+        print(f"Invalid token: {e}")  # 잘못된 토큰 로그
+        return jsonify({"success": False, "message": "Invalid token"}), 401
+    except Exception as e:
+        print(f"An error occurred: {e}")  # 서버 에러 로그
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+# JWT 토큰 디코딩 함수
+def get_user_id_from_token(auth_header):
+    try:
+        # Authorization 헤더가 비어있거나 잘못된 형식일 경우 처리
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise ValueError("Invalid Authorization header")
+        
+        # "Bearer " 이후의 토큰 부분만 추출
+        token = auth_header.split(" ")[1]
+        
+        # JWT 디코딩
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        
+        # `user_id` 추출
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise ValueError("user_id not found in token")
+        
+        return user_id
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except jwt.InvalidTokenError:
+        raise ValueError("Invalid token")
+    except Exception as e:
+        raise ValueError(f"Error decoding token: {str(e)}")
+    
+@app.route('/api/update-status', methods=['POST'])
+def update_status():
+    # Authorization 헤더에서 토큰 추출
+    auth_header = request.headers.get('Authorization')
+    try:
+        # 토큰에서 user_id 추출
+        user_id = get_user_id_from_token(auth_header)
+    except ValueError as e:
+        return jsonify({"success": False, "message": str(e)}), 401
+
+    # 요청 데이터에서 status 값 가져오기
+    data = request.json
+    new_status = data.get('status')
+    valid_statuses = ['Available', 'On a Trip', 'Offline']
+
+    if not new_status:
+        return jsonify({"success": False, "message": "Status is missing"}), 400
+    if new_status not in valid_statuses:
+        return jsonify({"success": False, "message": f"Invalid status value. Must be one of {valid_statuses}"}), 400
+
+    # DB 업데이트
+    try:
+        db.session.execute(text("""
+            UPDATE Driver
+            SET Current_Status = :new_status
+            WHERE User_ID = :user_id
+        """), {"new_status": new_status, "user_id": user_id})
+        db.session.commit()
+        return jsonify({"success": True, "message": "Status updated successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+@app.route('/api/update-profile', methods=['POST'])
+def update_profile():
+    try:
+        # Authorization 헤더에서 토큰 추출
+        auth_header = request.headers.get('Authorization')
+        user_id = get_user_id_from_token(auth_header)
+
+        # 클라이언트로부터 데이터 받기
+        data = request.json
+        email = data.get('email')
+        phone = data.get('phone')
+        address = data.get('address')
+        private_truck_info = data.get('privateTruckInfo')
+        password = data.get('password')  # 비밀번호 변경이 필요한 경우
+
+        # 각 필드 업데이트 처리
+        if email:
+            print(f"Updating email to: {email}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE User
+                SET Email = :email
+                WHERE User_ID = :user_id
+            """), {"email": email, "user_id": user_id})
+
+        if phone:
+            print(f"Updating phone to: {phone}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE User
+                SET Phone_Number = :phone
+                WHERE User_ID = :user_id
+            """), {"phone": phone, "user_id": user_id})
+
+        if address:
+            print(f"Updating address to: {address}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE Driver
+                SET Current_Location = :address
+                WHERE User_ID = :user_id
+            """), {"address": address, "user_id": user_id})
+
+        if private_truck_info:
+            print(f"Updating private_truck_info to: {private_truck_info}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE Driver
+                SET Private_Truck_Info = :private_truck_info
+                WHERE User_ID = :user_id
+            """), {"private_truck_info": private_truck_info, "user_id": user_id})
+
+        if password:
+            print(f"Updating password")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE Password
+                SET Password = :password
+                WHERE User_ID = :user_id
+            """), {"password": password, "user_id": user_id})
+
+        db.session.commit()
+        print("Profile updated successfully")  # 디버깅 로그
+        return jsonify({"success": True, "message": "Profile updated successfully"})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+    
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -402,6 +594,89 @@ def get_assigned_transport_logs():
         return jsonify({"success": True, "data": logs})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/update-transport-log', methods=['POST'])
+def update_transport_log():
+    # Authorization 헤더에서 토큰 추출
+    auth_header = request.headers.get('Authorization')
+    try:
+        # 토큰에서 user_id 추출
+        user_id = get_user_id_from_token(auth_header)
+    except ValueError as e:
+        return jsonify({"success": False, "message": str(e)}), 401
+
+    # 요청 데이터에서 log_id와 상태 값 가져오기
+    data = request.json
+    log_id = data.get('log_id')
+    assigned = data.get('assigned')  # Assigned 값: 0, 1, -1, 2
+    completed = data.get('completed', False)  # 완료 여부 (기본값 False)
+
+    if not log_id:
+        return jsonify({"success": False, "message": "Log ID is required"}), 400
+
+    try:
+        if assigned == -1:
+            # 거부된 경우
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET Assigned = -1
+                WHERE Log_ID = :log_id AND Driver_ID = :user_id
+            """), {"log_id": log_id, "user_id": user_id})
+        elif completed:
+            # 완료된 경우
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET Assigned = 2, Log_Memo = 'Completed'
+                WHERE Log_ID = :log_id AND Driver_ID = :user_id
+            """), {"log_id": log_id, "user_id": user_id})
+        else:
+            # 수락된 경우
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET Assigned = :assigned
+                WHERE Log_ID = :log_id AND Driver_ID = :user_id
+            """), {"assigned": assigned, "log_id": log_id, "user_id": user_id})
+
+        db.session.commit()
+        return jsonify({"success": True, "message": "Transport log updated successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+@app.route('/api/transport_logs/get_logs_by_driver', methods=['GET'])
+def get_transport_logs_by_driver():
+    try:
+        auth_header = request.headers.get('Authorization')
+        print(f"Authorization Header: {auth_header}")  # 디버깅 로그
+        user_id = get_user_id_from_token(auth_header)
+        print(f"User ID Decoded: {user_id}")  # 디코딩된 user_id 확인
+
+        result = db.session.execute(text("""
+            SELECT 
+                Log_ID AS id,
+                Driver_ID AS driver_id,
+                Depart_Zone_ID AS departZone,
+                Arrive_Zone_ID AS arriveZone,
+                Depart_Date AS departDate,
+                Arrive_Date AS arriveDate,
+                Assigned AS assigned,
+                Log_Memo AS memo
+            FROM Transport_Log
+            WHERE Driver_ID = :user_id AND Assigned != -1  -- 거부된 항목 제외
+        """), {"user_id": user_id})
+
+        logs = [dict(row._mapping) for row in result]
+        print(f"Logs Retrieved: {logs}")  # 로그 출력
+        return jsonify({"success": True, "data": logs})
+    except ValueError as ve:
+        print(f"ValueError: {str(ve)}")  # 디버깅 로그
+        return jsonify({"success": False, "message": str(ve)}), 401
+    except Exception as e:
+        print(f"Exception: {str(e)}")  # 디버깅 로그
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 
 # Flask 애플리케이션 실행
 if __name__ == "__main__":

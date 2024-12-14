@@ -10,38 +10,29 @@
       <select v-model="filterStatus">
         <option value="all">All</option>
         <option value="upcoming">Upcoming</option>
+        <option value="in_progress">In Progress</option>
         <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
       </select>
     </div>
 
-      <!-- New Trips -->
-      <div class="schedule-section" v-if="newTrips.length">
-        <h2>New Trips</h2>
-        <div class="trip" v-for="trip in newTrips" :key="trip.id">
-          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
-          <p><strong>Date:</strong> {{ trip.date }}</p>
-          <p><strong>Time:</strong> {{ trip.time }}</p>
-          <div class="action-buttons">
-            <button class="accept-button" @click="acceptTrip(trip.id)">Accept</button>
-            <button class="decline-button" @click="declineTrip(trip.id)">Decline</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Content -->
+    <!-- Main Content -->
     <div class="content">
       <!-- Filtered Trips -->
       <div class="schedule-section" v-if="filteredTrips.length">
         <div class="trip" v-for="trip in filteredTrips" :key="trip.id">
-          <h3>{{ trip.pickup }} → {{ trip.dropoff }}</h3>
-          <p><strong>Date:</strong> {{ trip.date }}</p>
-          <p><strong>Time:</strong> {{ trip.time }}</p>
-          <div v-if="trip.status === 'upcoming'" class="action-buttons">
+          <h3>{{ trip.departZone }} → {{ trip.arriveZone }}</h3>
+          <p><strong>Depart Date:</strong> {{ trip.departDate }}</p>
+          <p><strong>Arrive Date:</strong> {{ trip.arriveDate }}</p>
+          <div v-if="trip.assigned === 0" class="action-buttons">
+            <button @click="acceptTrip(trip.id)">Accept</button>
+            <button @click="declineTrip(trip.id)">Decline</button>
+          </div>
+          <div v-else-if="trip.assigned === 1" class="action-buttons">
             <button @click="markCompleted(trip.id)">Mark as Completed</button>
           </div>
-          <p v-else-if="trip.status === 'completed'" class="status-label completed">Completed</p>
-          <p v-else-if="trip.status === 'cancelled'" class="status-label cancelled">Cancelled</p>
+          <div v-else-if="trip.assigned === 2" class="action-buttons">
+            <button disabled>Completed</button>
+          </div>
         </div>
       </div>
 
@@ -58,74 +49,112 @@ export default {
   data() {
     return {
       filterStatus: "all", // Default filter
-      trips: [
-        { 
-          id: 1,
-          pickup: "Location A",
-          dropoff: "Location B",
-          date: "2024-11-22",
-          time: "10:00 AM",
-          status: "upcoming",
-        },
-        {
-          id: 2,
-          pickup: "Location C",
-          dropoff: "Location D",
-          date: "2024-11-23",
-          time: "2:00 PM",
-          status: "completed",
-        },
-        {
-          id: 3,
-          pickup: "Location E",
-          dropoff: "Location F",
-          date: "2024-11-24",
-          time: "11:00 AM",
-          status: "cancelled",
-        },
-      ],
-      newTrips: [
-        {
-          id: 4,
-          pickup: "Location G",
-          dropoff: "Location H",
-          date: "2024-11-25",
-          time: "9:00 AM",
-        },
-      ], // Store new trips assigned by the manager
+      trips: [],
     };
   },
   computed: {
     filteredTrips() {
-      if (this.filterStatus === "all") {
-        return this.trips;
+      if (!this.trips) {
+        return []; // `trips`가 정의되지 않았을 경우 빈 배열 반환
       }
-      return this.trips.filter((trip) => trip.status === this.filterStatus);
+      // 필터 조건에 따라 분류
+      return this.trips.filter((trip) => {
+        if (this.filterStatus === "all") return true; // 모든 상태
+        if (this.filterStatus === "upcoming") return trip.assigned === 0; // upcoming
+        if (this.filterStatus === "in_progress") return trip.assigned === 1; // in progress
+        if (this.filterStatus === "completed") return trip.assigned === 2; // completed
+        return false; // 기본 값
+      });
     },
   },
   methods: {
-    markCompleted(tripId) {
-      // Find the trip and update its status
-      const tripIndex = this.trips.findIndex((t) => t.id === tripId);
-      if (tripIndex !== -1) {
-        const updatedTrip = { ...this.trips[tripIndex], status: "completed" };
-        this.trips.splice(tripIndex, 1, updatedTrip); // Replace with updated trip
-        alert(`Trip has been marked as completed.`);
-      } else {
-        alert(`Error: Trip not found.`);
+    async fetchTrips() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:8080/api/transport_logs/get_logs_by_driver",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched trips:", data);
+          if (data.success) {
+            this.trips = data.data.map((trip) => ({
+              ...trip,
+              assigned: Number(trip.assigned), // 명시적으로 숫자로 변환
+            }));
+            console.log("Trips after conversion:", this.trips); // 변환된 데이터 확인
+          } else {
+            console.error("Failed to fetch trips:", data.message);
+          }
+        } else {
+          console.error("API request failed. Status:", response.status);
+        }
+      } catch (error) {
+        console.error("An error occurred while fetching trips:", error);
       }
     },
-    acceptTrip(tripId) {
-      const tripIndex = this.newTrips.findIndex((t) => t.id === tripId);
+    markCompleted(logId) {
+      const tripIndex = this.trips.findIndex((t) => t.id === logId);
       if (tripIndex !== -1) {
-        const trip = this.newTrips.splice(tripIndex, 1)[0];
-        trip.status = "upcoming";
-        this.trips.push(trip);
+        this.updateTripStatus(logId, true, true) // 서버에서 상태 업데이트
+          .then(() => {
+            this.trips[tripIndex].assigned = 2; // 새로운 상태값 설정
+            console.log(`Trip ${logId} marked as completed.`);
+          })
+          .catch((error) => {
+            console.error(`Failed to mark trip ${logId} as completed:`, error);
+          });
       }
     },
-    declineTrip(tripId) {
-      this.newTrips = this.newTrips.filter((t) => t.id !== tripId);
+    acceptTrip(logId) {
+      const tripIndex = this.trips.findIndex((t) => t.id === logId);
+      if (tripIndex !== -1) {
+        this.trips[tripIndex].assigned = true;
+        this.trips[tripIndex].status = "upcoming"; // 상태 필드 업데이트
+        this.updateTripStatus(logId, true);
+      }
     },
+    declineTrip(logId) {
+      const tripIndex = this.trips.findIndex((t) => t.id === logId);
+      if (tripIndex !== -1) {
+        this.trips.splice(tripIndex, 1); // 로컬에서 즉시 제거
+        this.updateTripStatus(logId, -1); // 거부된 상태를 서버에 전달
+      }
+    },
+    async updateTripStatus(logId, assigned, completed = false) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:8080/api/update-transport-log`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ log_id: logId, assigned, completed }),
+          },
+        );
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+        return response.json(); // 성공 시 JSON 반환
+      } catch (error) {
+        console.error("An error occurred while updating trip status:", error);
+        throw error; // 에러를 호출부로 전달
+      }
+    },
+  },
+  mounted() {
+    this.fetchTrips();
   },
 };
 </script>
@@ -234,7 +263,9 @@ button {
   border-radius: 5px;
   cursor: pointer;
   color: white;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 button:hover {
