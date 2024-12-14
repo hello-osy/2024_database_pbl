@@ -595,6 +595,81 @@ def get_assigned_transport_logs():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+
+@app.route('/api/update-transport-log', methods=['POST'])
+def update_transport_log():
+    # Authorization 헤더에서 토큰 추출
+    auth_header = request.headers.get('Authorization')
+    try:
+        # 토큰에서 user_id 추출
+        user_id = get_user_id_from_token(auth_header)
+    except ValueError as e:
+        return jsonify({"success": False, "message": str(e)}), 401
+
+    # 요청 데이터에서 log_id와 상태 값 가져오기
+    data = request.json
+    log_id = data.get('log_id')
+    assigned = data.get('assigned')  # True 또는 False
+    completed = data.get('completed', False)  # 완료 여부 (기본값 False)
+
+    if not log_id:
+        return jsonify({"success": False, "message": "Log ID is required"}), 400
+
+    try:
+        # 상태 업데이트
+        if completed:
+            # 완료된 경우, 추가적인 상태 업데이트 (완료 처리 로직)
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET Assigned = TRUE
+                WHERE Log_ID = :log_id AND Driver_ID = :user_id
+            """), {"log_id": log_id, "user_id": user_id})
+        else:
+            # 수락 또는 거부 상태 업데이트
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET Assigned = :assigned
+                WHERE Log_ID = :log_id AND Driver_ID = :user_id
+            """), {"assigned": assigned, "log_id": log_id, "user_id": user_id})
+
+        db.session.commit()
+        return jsonify({"success": True, "message": "Transport log updated successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+@app.route('/api/transport_logs/get_logs_by_driver', methods=['GET'])
+def get_transport_logs_by_driver():
+    try:
+        # JWT 토큰에서 user_id 추출
+        auth_header = request.headers.get('Authorization')
+        user_id = get_user_id_from_token(auth_header)
+
+        # Transport_Log에서 Driver_ID가 user_id인 데이터 필터링
+        result = db.session.execute(text("""
+            SELECT 
+                Log_ID AS id,
+                Driver_ID AS driver_id,
+                Depart_Zone_ID AS departZone,
+                Arrive_Zone_ID AS arriveZone,
+                Depart_Date AS departDate,
+                Arrive_Date AS arriveDate,
+                Assigned AS assigned,
+                Log_Memo AS memo
+            FROM Transport_Log
+            WHERE Driver_ID = :user_id
+        """), {"user_id": user_id})
+
+        logs = [dict(row._mapping) for row in result]
+        print(f"Logs Retrieved: {logs}")  # 로그 데이터 출력
+        return jsonify({"success": True, "data": logs})
+    except ValueError as ve:
+        return jsonify({"success": False, "message": str(ve)}), 401
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
