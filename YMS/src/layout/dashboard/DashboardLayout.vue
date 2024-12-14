@@ -105,7 +105,7 @@ export default {
 
         if (response.data.success) {
           const yardLinks = response.data.data.map((yard) => ({
-            path: `/admin/yard${yard.id}`, // 동적 경로
+            path: `/admin/yard/${yard.id}`, // 동적 경로
             name: yard.name, // Yard 이름
           }));
 

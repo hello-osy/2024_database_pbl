@@ -20,7 +20,7 @@ async function addDynamicRoutes() {
 
       // 동적으로 추가할 라우트 배열 생성
       const dynamicRoutes = yards.map((yard) => ({
-        path: `/admin/yard${yard.id}`, // 동적 경로
+        path: `/admin/yard/${yard.id}`, // 동적 경로
         name: `Yard${yard.id}`, // 라우트 이름
         component: () => import(`@/pages/Admin/Yard/Yard_reuse.vue`), // Vue 컴포넌트
         meta: { yardName: yard.name, yardId: yard.id }, // 메타 정보
