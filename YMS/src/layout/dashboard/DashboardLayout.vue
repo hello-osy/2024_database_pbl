@@ -52,6 +52,10 @@ import TopNavbar from "./TopNavbar.vue";
 import DashboardContent from "./Content.vue";
 import MobileMenu from "./MobileMenu";
 import AssignedManagement from "../../pages/Admin/AssignedManagement.vue";
+
+import axios from "axios";
+
+
 export default {
   data() {
     return {
@@ -62,15 +66,15 @@ export default {
           icon: "ti-panel",
           children: [
             { path: "/admin/yard1", name: "HOU_YARD_0001" },
-            { path: "/admin/yard2", name: "HOU_YARD_0002" },
-            { path: "/admin/yard3", name: "LA_YARD_0001" },
-            { path: "/admin/yard4", name: "LA_YARD_0002" },
-            { path: "/admin/yard5", name: "MOB_YARD_0001" },
-            { path: "/admin/yard6", name: "MOB_YARD_0002" },
-            { path: "/admin/yard7", name: "PHX_YARD_0001" },
-            { path: "/admin/yard8", name: "PHX_YARD_0002" },
-            { path: "/admin/yard9", name: "SAV_YARD_0001" },
-            { path: "/admin/yard10", name: "SAV_YARD_0002" },
+            // { path: "/admin/yard2", name: "HOU_YARD_0002" },
+            // { path: "/admin/yard3", name: "LA_YARD_0001" },
+            // { path: "/admin/yard4", name: "LA_YARD_0002" },
+            // { path: "/admin/yard5", name: "MOB_YARD_0001" },
+            // { path: "/admin/yard6", name: "MOB_YARD_0002" },
+            // { path: "/admin/yard7", name: "PHX_YARD_0001" },
+            // { path: "/admin/yard8", name: "PHX_YARD_0002" },
+            // { path: "/admin/yard9", name: "SAV_YARD_0001" },
+            // { path: "/admin/yard10", name: "SAV_YARD_0002" },
           ],
         },
         {
@@ -94,11 +98,37 @@ export default {
     MobileMenu,
   },
   methods: {
+    async fetchYardLinks() {
+      try {
+        // Yard 데이터를 API에서 가져옴
+        const response = await axios.get("/api/yard/all");
+
+        if (response.data.success) {
+          const yardLinks = response.data.data.map((yard) => ({
+            path: `/admin/yard${yard.id}`, // 동적 경로
+            name: yard.name, // Yard 이름
+          }));
+
+          // "Dashboard" 링크의 children에 Yard 링크 추가
+          const dashboardLink = this.links.find((link) => link.name === "Dashboard");
+          if (dashboardLink) {
+            dashboardLink.children = yardLinks;
+          }
+        }
+        console.log("추가 성공적")
+      } catch (error) {
+        console.error("Error fetching yard links:", error.message);
+      }
+    },
     toggleSidebar() {
       if (this.$sidebar.showSidebar) {
         this.$sidebar.displaySidebar(false);
       }
     },
+  },
+  mounted() {
+    // 컴포넌트가 로드되면 Yard 링크를 가져와 추가
+    this.fetchYardLinks();
   },
 };
 </script>

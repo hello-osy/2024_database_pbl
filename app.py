@@ -403,7 +403,6 @@ def get_assigned_transport_logs():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

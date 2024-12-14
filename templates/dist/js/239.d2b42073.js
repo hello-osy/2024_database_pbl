@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkvue_paper_dashboard"]=self["webpackChunkvue_paper_dashboard"]||[]).push([[239],{7239:function(e,r,a){a.r(r),a.d(r,{default:function(){return i}});var d=function(){var e=this,r=e._self._c;return r("div",[r("h2",[e._v("Yard Details: "+e._s(e.yardId))]),r("p",[e._v("Details about the yard will be displayed here.")])])},t=[],s={name:"Yard",props:{yardId:{type:String,required:!0}},mounted(){console.log("Yard ID:",this.yardId)}},u=s,n=a(1656),l=(0,n.A)(u,d,t,!1,null,"46c49398",null),i=l.exports}}]);
+//# sourceMappingURL=239.d2b42073.js.map
