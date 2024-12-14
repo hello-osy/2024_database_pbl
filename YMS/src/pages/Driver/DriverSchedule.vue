@@ -23,11 +23,11 @@
           <h3>{{ trip.departZone }} → {{ trip.arriveZone }}</h3>
           <p><strong>Depart Date:</strong> {{ trip.departDate }}</p>
           <p><strong>Arrive Date:</strong> {{ trip.arriveDate }}</p>
-          <div v-if="trip.assigned === false" class="action-buttons">
+          <div v-if="trip.assigned === 0" class="action-buttons">
             <button @click="acceptTrip(trip.id)">Accept</button>
             <button @click="declineTrip(trip.id)">Decline</button>
           </div>
-          <div v-else-if="trip.assigned === true" class="action-buttons">
+          <div v-else-if="trip.assigned === 1" class="action-buttons">
             <button @click="markCompleted(trip.id)">Mark as Completed</button>
           </div>
         </div>
@@ -63,39 +63,27 @@ export default {
   methods: {
     async fetchTrips() {
       try {
-        // 로컬 스토리지에서 JWT 토큰 가져오기
         const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("Token is missing. Please log in.");
-          return;
-        }
-
-        // JWT에서 driver_id 추출
-        const payload = JSON.parse(atob(token.split(".")[1])); // 토큰의 payload 디코딩
-        const driverId = payload.user_id;
-        if (!driverId) {
-          console.error("Driver ID is missing in the token payload.");
-          return;
-        }
-
-        // Flask API 호출
         const response = await fetch(
-          `http://localhost:8080/api/transport_logs/get_logs_by_driver`,
+          "http://localhost:8080/api/transport_logs/get_logs_by_driver",
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // 인증 헤더 추가
+              Authorization: `Bearer ${token}`,
             },
           },
         );
 
-        // 응답 처리
         if (response.ok) {
           const data = await response.json();
           console.log("Fetched trips:", data);
           if (data.success) {
-            this.trips = data.data; // 성공 시 trips 배열에 데이터 저장
+            this.trips = data.data.map((trip) => ({
+              ...trip,
+              assigned: Number(trip.assigned), // 명시적으로 숫자로 변환
+            }));
+            console.log("Trips after conversion:", this.trips); // 변환된 데이터 확인
           } else {
             console.error("Failed to fetch trips:", data.message);
           }
@@ -106,7 +94,6 @@ export default {
         console.error("An error occurred while fetching trips:", error);
       }
     },
-
     markCompleted(logId) {
       const tripIndex = this.trips.findIndex((t) => t.id === logId);
       if (tripIndex !== -1) {

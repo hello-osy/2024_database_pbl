@@ -641,11 +641,11 @@ def update_transport_log():
 @app.route('/api/transport_logs/get_logs_by_driver', methods=['GET'])
 def get_transport_logs_by_driver():
     try:
-        # JWT 토큰에서 user_id 추출
         auth_header = request.headers.get('Authorization')
+        print(f"Authorization Header: {auth_header}")  # 디버깅 로그
         user_id = get_user_id_from_token(auth_header)
+        print(f"User ID Decoded: {user_id}")  # 디코딩된 user_id 확인
 
-        # Transport_Log에서 Driver_ID가 user_id인 데이터 필터링
         result = db.session.execute(text("""
             SELECT 
                 Log_ID AS id,
@@ -661,11 +661,13 @@ def get_transport_logs_by_driver():
         """), {"user_id": user_id})
 
         logs = [dict(row._mapping) for row in result]
-        print(f"Logs Retrieved: {logs}")  # 로그 데이터 출력
+        print(f"Logs Retrieved: {logs}")  # 로그 출력
         return jsonify({"success": True, "data": logs})
     except ValueError as ve:
+        print(f"ValueError: {str(ve)}")  # 디버깅 로그
         return jsonify({"success": False, "message": str(ve)}), 401
     except Exception as e:
+        print(f"Exception: {str(e)}")  # 디버깅 로그
         return jsonify({"success": False, "message": str(e)}), 500
 
 
