@@ -102,6 +102,56 @@ def login():
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
+@app.route('/api/driver-info', methods=['GET'])
+def get_driver_info():
+    print("Driver info API called")  # API 호출 로그
+    auth_header = request.headers.get('Authorization')
+    print(f"Authorization Header: {auth_header}")  # Authorization 헤더 값 출력
+
+    # Authorization 헤더 유효성 확인
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"success": False, "message": "Authorization header missing or invalid"}), 401
+
+    # 토큰 추출
+    token = auth_header.split(" ")[1]
+    try:
+        # JWT 디코딩
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        print(f"Decoded Payload: {payload}")  # 디코딩된 페이로드 출력
+
+        # DB 쿼리 실행
+        user_id = payload['user_id']
+        result = db.session.execute(text("""
+            SELECT User_ID, Current_Status, Current_Location 
+            FROM Driver 
+            WHERE User_ID = :user_id
+        """), {"user_id": user_id})
+        driver = result.fetchone()
+
+        if driver:
+            print(f"Driver found: {driver}")  # 드라이버 정보 출력
+            return jsonify({
+                "success": True,
+                "driver": {
+                    "user_id": driver._mapping['User_ID'],  # User_ID 사용
+                    "status": driver._mapping['Current_Status'],  # Current_Status 사용
+                    "location": driver._mapping['Current_Location']  # Current_Location 반환
+                }
+            })
+        else:
+            print("Driver not found")  # 드라이버 없음 로그
+            return jsonify({"success": False, "message": "Driver not found"}), 404
+
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")  # 토큰 만료 로그
+        return jsonify({"success": False, "message": "Token expired"}), 401
+    except jwt.InvalidTokenError as e:
+        print(f"Invalid token: {e}")  # 잘못된 토큰 로그
+        return jsonify({"success": False, "message": "Invalid token"}), 401
+    except Exception as e:
+        print(f"An error occurred: {e}")  # 서버 에러 로그
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.json
