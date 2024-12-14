@@ -10,8 +10,8 @@
       <select v-model="filterStatus">
         <option value="all">All</option>
         <option value="upcoming">Upcoming</option>
+        <option value="in_progress">In Progress</option>
         <option value="completed">Completed</option>
-        <option value="pending">Pending</option>
       </select>
     </div>
 
@@ -29,6 +29,9 @@
           </div>
           <div v-else-if="trip.assigned === 1" class="action-buttons">
             <button @click="markCompleted(trip.id)">Mark as Completed</button>
+          </div>
+          <div v-else-if="trip.assigned === 2" class="action-buttons">
+            <button disabled>Completed</button>
           </div>
         </div>
       </div>
@@ -54,9 +57,13 @@ export default {
       if (!this.trips) {
         return []; // `trips`가 정의되지 않았을 경우 빈 배열 반환
       }
+      // 필터 조건에 따라 분류
       return this.trips.filter((trip) => {
-        if (this.filterStatus === "all") return true;
-        return trip.status === this.filterStatus;
+        if (this.filterStatus === "all") return true; // 모든 상태
+        if (this.filterStatus === "upcoming") return trip.assigned === 0; // upcoming
+        if (this.filterStatus === "in_progress") return trip.assigned === 1; // in progress
+        if (this.filterStatus === "completed") return trip.assigned === 2; // completed
+        return false; // 기본 값
       });
     },
   },
@@ -97,8 +104,14 @@ export default {
     markCompleted(logId) {
       const tripIndex = this.trips.findIndex((t) => t.id === logId);
       if (tripIndex !== -1) {
-        this.trips[tripIndex].status = "completed";
-        this.updateTripStatus(logId, true, true);
+        this.updateTripStatus(logId, true, true) // 서버에서 상태 업데이트
+          .then(() => {
+            this.trips[tripIndex].assigned = 2; // 새로운 상태값 설정
+            console.log(`Trip ${logId} marked as completed.`);
+          })
+          .catch((error) => {
+            console.error(`Failed to mark trip ${logId} as completed:`, error);
+          });
       }
     },
     acceptTrip(logId) {
@@ -110,8 +123,11 @@ export default {
       }
     },
     declineTrip(logId) {
-      this.trips = this.trips.filter((t) => t.id !== logId);
-      this.updateTripStatus(logId, false);
+      const tripIndex = this.trips.findIndex((t) => t.id === logId);
+      if (tripIndex !== -1) {
+        this.trips.splice(tripIndex, 1); // 로컬에서 즉시 제거
+        this.updateTripStatus(logId, -1); // 거부된 상태를 서버에 전달
+      }
     },
     async updateTripStatus(logId, assigned, completed = false) {
       try {
@@ -128,10 +144,12 @@ export default {
           },
         );
         if (!response.ok) {
-          console.error("Failed to update trip status");
+          throw new Error(`API request failed with status ${response.status}`);
         }
+        return response.json(); // 성공 시 JSON 반환
       } catch (error) {
         console.error("An error occurred while updating trip status:", error);
+        throw error; // 에러를 호출부로 전달
       }
     },
   },

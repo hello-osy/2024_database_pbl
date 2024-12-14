@@ -609,23 +609,29 @@ def update_transport_log():
     # 요청 데이터에서 log_id와 상태 값 가져오기
     data = request.json
     log_id = data.get('log_id')
-    assigned = data.get('assigned')  # True 또는 False
+    assigned = data.get('assigned')  # Assigned 값: 0, 1, -1, 2
     completed = data.get('completed', False)  # 완료 여부 (기본값 False)
 
     if not log_id:
         return jsonify({"success": False, "message": "Log ID is required"}), 400
 
     try:
-        # 상태 업데이트
-        if completed:
-            # 완료된 경우, 추가적인 상태 업데이트 (완료 처리 로직)
+        if assigned == -1:
+            # 거부된 경우
             db.session.execute(text("""
                 UPDATE Transport_Log
-                SET Assigned = TRUE
+                SET Assigned = -1
+                WHERE Log_ID = :log_id AND Driver_ID = :user_id
+            """), {"log_id": log_id, "user_id": user_id})
+        elif completed:
+            # 완료된 경우
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET Assigned = 2, Log_Memo = 'Completed'
                 WHERE Log_ID = :log_id AND Driver_ID = :user_id
             """), {"log_id": log_id, "user_id": user_id})
         else:
-            # 수락 또는 거부 상태 업데이트
+            # 수락된 경우
             db.session.execute(text("""
                 UPDATE Transport_Log
                 SET Assigned = :assigned
@@ -657,7 +663,7 @@ def get_transport_logs_by_driver():
                 Assigned AS assigned,
                 Log_Memo AS memo
             FROM Transport_Log
-            WHERE Driver_ID = :user_id
+            WHERE Driver_ID = :user_id AND Assigned != -1  -- 거부된 항목 제외
         """), {"user_id": user_id})
 
         logs = [dict(row._mapping) for row in result]
