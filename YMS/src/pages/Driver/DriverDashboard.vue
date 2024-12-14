@@ -34,16 +34,16 @@
     <!-- Metrics Section -->
     <div class="metrics">
       <div class="metric-box">
-        <h3>{{ metrics[0].value }}</h3>
-        <p>{{ metrics[0].label }}</p>
+        <h3>{{ driver.tripsCompleted }}</h3>
+        <p>Trips Completed</p>
       </div>
       <div class="metric-box">
-        <h3>{{ metrics[1].value }}</h3>
-        <p>{{ metrics[1].label }}</p>
+        <h3>{{ driver.monthlyEarnings }}</h3>
+        <p>Monthly Earnings</p>
       </div>
       <div class="metric-box">
-        <h3>{{ metrics[2].value }}</h3>
-        <p>{{ metrics[2].label }}</p>
+        <h3>{{ driver.averageRatings }}</h3>
+        <p>Average Ratings</p>
       </div>
     </div>
 
@@ -70,17 +70,15 @@ export default {
         user_id: "", // User ID를 저장할 필드 추가
         name: "", // Driver의 이름 (Name이 없을 경우 User_ID로 대체)
         status: "Available", // Default status
+        tripsCompleted: 0,
+        monthlyEarnings: "$0.00",
+        averageRatings: "0.00",
         statuses: [
           { status: "Available" },
           { status: "On a Trip" },
           { status: "Offline" },
         ],
       },
-      metrics: [
-        { label: "Trips completed", value: 120 },
-        { label: "Earnings (This Month)", value: "$19,000" },
-        { label: "Average Rating", value: 4.8 },
-      ],
       upcomingTrip: {
         pickup: "123 Elm Street",
         dropoff: "426 Oak Avenue",
@@ -107,7 +105,7 @@ export default {
     },
     welcomeMessage() {
       // Welcome 메시지 동적으로 생성
-      return `Welcome, ${this.driver.name || this.driver.user_id}!`;
+      return `Welcome, ${this.driver.user_id}!`;
     },
   },
   methods: {
@@ -131,10 +129,21 @@ export default {
         console.log("Response status:", response.status); // 응답 상태 코드 확인
         const data = await response.json();
         if (data.success) {
-          this.driver.user_id = data.driver.user_id; // User_ID 설정
-          this.driver.name = data.driver.name || ""; // Name 설정 (없을 경우 빈 값)
-          this.driver.status = data.driver.status; // Status 설정
-          console.log("Driver info fetched successfully:", data);
+          const driverInfo = data.driver;
+          this.driver = {
+            ...this.driver,
+            user_id: driverInfo.user_id || "",
+            name: driverInfo.name || "",
+            status: driverInfo.status || "Available",
+            tripsCompleted: driverInfo.tripsCompleted || 0,
+            monthlyEarnings: driverInfo.monthlyEarnings
+              ? `$${parseFloat(driverInfo.monthlyEarnings).toFixed(2)}`
+              : "$0.00",
+            averageRatings: driverInfo.averageRatings
+              ? parseFloat(driverInfo.averageRatings).toFixed(2)
+              : "0.00",
+          };
+          console.log("Driver info fetched successfully:", this.driver);
         } else {
           console.error("Failed to fetch driver info:", data.message);
         }
@@ -167,13 +176,11 @@ export default {
           },
         );
 
-        console.log("Response status for status update:", response.status); // 응답 상태 코드 확인
-        const data = await response.json();
-        if (data.success) {
-          this.driver.status = newStatus; // 상태 업데이트
-          console.log("Driver status updated successfully:", data);
+        if (response.ok) {
+          this.driver.status = newStatus;
+          await this.fetchDriverInfo(); // 데이터 갱신
         } else {
-          console.error("Failed to update driver status:", data.message);
+          console.error("Failed to update driver status.");
         }
       } catch (error) {
         console.error("An error occurred while updating driver status:", error);

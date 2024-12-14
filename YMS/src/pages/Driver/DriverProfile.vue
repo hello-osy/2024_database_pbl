@@ -40,9 +40,12 @@
       <h2>Professional Information</h2>
       <ul>
         <li><strong>Assigned Vehicle:</strong> {{ driver.vehicle }}</li>
-        <li><strong>License Plate:</strong> {{ driver.licensePlate }}</li>
-        <li><strong>Trips Completed:</strong> {{ stats.tripsCompleted }}</li>
-        <li><strong>Average Rating:</strong> {{ stats.rating }}</li>
+        <li>
+          <strong>Private Truck Info:</strong> {{ driver.privateTruckInfo }}
+        </li>
+        <li><strong>Trips Completed:</strong> {{ driver.tripsCompleted }}</li>
+        <li><strong>Monthly Earnings:</strong> {{ driver.monthlyEarnings }}</li>
+        <li><strong>Average Ratings:</strong> {{ driver.averageRatings }}</li>
       </ul>
     </div>
 
@@ -67,11 +70,10 @@ export default {
         email: "",
         address: "",
         vehicle: "",
-        licensePlate: "",
-      },
-      stats: {
+        privateTruckInfo: "",
         tripsCompleted: 0,
-        rating: 0,
+        monthlyEarnings: 0,
+        averageRatings: 0,
       },
     };
   },
@@ -104,12 +106,16 @@ export default {
               email: driverInfo.email || "Not provided",
               address: driverInfo.address || "Not provided",
               vehicle: driverInfo.vehicle || "Not assigned",
-              licensePlate: driverInfo.licensePlate || "Not assigned",
+              privateTruckInfo: driverInfo.truck_info || "Not assigned",
             };
-            this.stats = {
-              tripsCompleted: driverInfo.tripsCompleted || 0,
-              rating: driverInfo.rating || 0,
-            };
+
+            this.driver.tripsCompleted = driverInfo.tripsCompleted || 0;
+            this.driver.monthlyEarnings = driverInfo.monthlyEarnings
+              ? `$${parseFloat(driverInfo.monthlyEarnings).toFixed(2)}`
+              : "$0.00";
+            this.driver.averageRatings = driverInfo.averageRatings
+              ? parseFloat(driverInfo.averageRatings).toFixed(2)
+              : "0.00";
           } else {
             console.error("Failed to fetch driver info:", data.message);
           }

@@ -128,6 +128,9 @@ def get_driver_info():
                 d.Current_Location, 
                 d.Private_Truck_Info, 
                 d.Truck_ID,
+                d.Trips_Completed,
+                d.Monthly_Earnings,
+                d.Average_Ratings,
                 u.UserName,
                 u.Email,
                 u.Phone_Number
@@ -143,13 +146,16 @@ def get_driver_info():
                 "success": True,
                 "driver": {
                     "user_id": driver._mapping['User_ID'],
-                    "name": driver._mapping['UserName'],  # UserName 추가
-                    "email": driver._mapping['Email'],  # Email 추가
-                    "phone": driver._mapping['Phone_Number'],  # Phone 추가
+                    "name": driver._mapping['UserName'],
+                    "email": driver._mapping['Email'],
+                    "phone": driver._mapping['Phone_Number'],
                     "status": driver._mapping['Current_Status'],
                     "location": driver._mapping['Current_Location'],
                     "truck_info": driver._mapping['Private_Truck_Info'],
-                    "truck_id": driver._mapping['Truck_ID']
+                    "truck_id": driver._mapping['Truck_ID'],
+                    "tripsCompleted": driver._mapping['Trips_Completed'],
+                    "monthlyEarnings": driver._mapping['Monthly_Earnings'],
+                    "averageRatings": driver._mapping['Average_Ratings']
                 }
             })
         else:
@@ -224,6 +230,70 @@ def update_status():
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
+@app.route('/api/update-profile', methods=['POST'])
+def update_profile():
+    try:
+        # Authorization 헤더에서 토큰 추출
+        auth_header = request.headers.get('Authorization')
+        user_id = get_user_id_from_token(auth_header)
+
+        # 클라이언트로부터 데이터 받기
+        data = request.json
+        email = data.get('email')
+        phone = data.get('phone')
+        address = data.get('address')
+        private_truck_info = data.get('privateTruckInfo')
+        password = data.get('password')  # 비밀번호 변경이 필요한 경우
+
+        # 각 필드 업데이트 처리
+        if email:
+            print(f"Updating email to: {email}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE User
+                SET Email = :email
+                WHERE User_ID = :user_id
+            """), {"email": email, "user_id": user_id})
+
+        if phone:
+            print(f"Updating phone to: {phone}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE User
+                SET Phone_Number = :phone
+                WHERE User_ID = :user_id
+            """), {"phone": phone, "user_id": user_id})
+
+        if address:
+            print(f"Updating address to: {address}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE Driver
+                SET Current_Location = :address
+                WHERE User_ID = :user_id
+            """), {"address": address, "user_id": user_id})
+
+        if private_truck_info:
+            print(f"Updating private_truck_info to: {private_truck_info}")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE Driver
+                SET Private_Truck_Info = :private_truck_info
+                WHERE User_ID = :user_id
+            """), {"private_truck_info": private_truck_info, "user_id": user_id})
+
+        if password:
+            print(f"Updating password")  # 디버깅 로그
+            db.session.execute(text("""
+                UPDATE Password
+                SET Password = :password
+                WHERE User_ID = :user_id
+            """), {"password": password, "user_id": user_id})
+
+        db.session.commit()
+        print("Profile updated successfully")  # 디버깅 로그
+        return jsonify({"success": True, "message": "Profile updated successfully"})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+    
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.json
