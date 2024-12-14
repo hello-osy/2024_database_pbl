@@ -142,6 +142,43 @@ export default {
         console.error("An error occurred while fetching driver info:", error);
       }
     },
+    async updateStatus(newStatus) {
+      if (this.driver.status === newStatus) {
+        console.log(`Status is already ${newStatus}, no update needed.`);
+        return;
+      }
+      try {
+        const token = localStorage.getItem("token");
+        console.log("Token being sent for status update:", token); // 디버깅용
+        if (!token) {
+          console.error("Token is missing. Please log in again.");
+          return;
+        }
+
+        const response = await fetch(
+          "http://localhost:8080/api/update-status",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ status: newStatus }),
+          },
+        );
+
+        console.log("Response status for status update:", response.status); // 응답 상태 코드 확인
+        const data = await response.json();
+        if (data.success) {
+          this.driver.status = newStatus; // 상태 업데이트
+          console.log("Driver status updated successfully:", data);
+        } else {
+          console.error("Failed to update driver status:", data.message);
+        }
+      } catch (error) {
+        console.error("An error occurred while updating driver status:", error);
+      }
+    },
     /*
     changeStatus() {
       // Toggle driver status between Available and Offline
@@ -160,7 +197,6 @@ export default {
     */
   },
   mounted() {
-    console.log("Component mounted, calling fetchDriverInfo");
     this.fetchDriverInfo();
   },
 };
