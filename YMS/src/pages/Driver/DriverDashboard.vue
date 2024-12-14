@@ -49,11 +49,18 @@
 
     <!-- Upcoming Trip Section -->
     <div class="upcoming-trip">
-      <h2>Upcoming Trip</h2>
-      <div v-if="upcomingTrip">
-        <p><strong>Pickup:</strong> {{ upcomingTrip.pickup }}</p>
-        <p><strong>Drop-off:</strong> {{ upcomingTrip.dropoff }}</p>
-        <p><strong>Time:</strong> {{ upcomingTrip.time }}</p>
+      <h2>Upcoming Trips</h2>
+      <div v-if="upcomingTrips.length">
+        <div
+          v-for="(trip, index) in upcomingTrips"
+          :key="index"
+          class="trip-card"
+        >
+          <p><strong>Pickup Zone:</strong> {{ trip.pickup }}</p>
+          <p><strong>Dropoff Zone:</strong> {{ trip.dropoff }}</p>
+          <p><strong>Depart Date:</strong> {{ trip.departDate }}</p>
+          <p><strong>Arrive Date:</strong> {{ trip.arriveDate }}</p>
+        </div>
       </div>
       <div v-else>
         <p>No upcoming trips scheduled.</p>
@@ -79,15 +86,7 @@ export default {
           { status: "Offline" },
         ],
       },
-      upcomingTrip: {
-        pickup: "123 Elm Street",
-        dropoff: "426 Oak Avenue",
-        time: "Tomorrow, 10:00 AM",
-      },
-      notifications: [
-        { id: 1, message: "Your next trip is scheduled for tomorrow." },
-        { id: 2, message: "New earnings report available." },
-      ],
+      upcomingTrips: [], // 여러 개의 upcoming trip을 저장하는 배열
     };
   },
   computed: {
@@ -151,6 +150,45 @@ export default {
         console.error("An error occurred while fetching driver info:", error);
       }
     },
+    async fetchUpcomingTrips() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing. Please log in again.");
+          return;
+        }
+
+        const response = await fetch(
+          "http://localhost:8080/api/transport_logs/get_logs_by_driver",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+        if (data.success) {
+          this.upcomingTrips = data.data
+            .filter((trip) => trip.assigned === 0) // upcoming 상태만 필터링
+            .map((trip) => ({
+              pickup: trip.departZone,
+              dropoff: trip.arriveZone,
+              departDate: trip.departDate,
+              arriveDate: trip.arriveDate,
+            }));
+        } else {
+          console.error("Failed to fetch upcoming trips:", data.message);
+        }
+      } catch (error) {
+        console.error(
+          "An error occurred while fetching upcoming trips:",
+          error,
+        );
+      }
+    },
     async updateStatus(newStatus) {
       if (this.driver.status === newStatus) {
         console.log(`Status is already ${newStatus}, no update needed.`);
@@ -205,6 +243,7 @@ export default {
   },
   mounted() {
     this.fetchDriverInfo();
+    this.fetchUpcomingTrips();
   },
 };
 </script>
