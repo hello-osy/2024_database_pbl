@@ -122,9 +122,18 @@ def get_driver_info():
         # DB 쿼리 실행
         user_id = payload['user_id']
         result = db.session.execute(text("""
-            SELECT User_ID, Current_Status, Current_Location 
-            FROM Driver 
-            WHERE User_ID = :user_id
+            SELECT 
+                d.User_ID, 
+                d.Current_Status, 
+                d.Current_Location, 
+                d.Private_Truck_Info, 
+                d.Truck_ID,
+                u.UserName,
+                u.Email,
+                u.Phone_Number
+            FROM Driver d
+            JOIN User u ON d.User_ID = u.User_ID
+            WHERE d.User_ID = :user_id
         """), {"user_id": user_id})
         driver = result.fetchone()
 
@@ -133,9 +142,14 @@ def get_driver_info():
             return jsonify({
                 "success": True,
                 "driver": {
-                    "user_id": driver._mapping['User_ID'],  # User_ID 사용
-                    "status": driver._mapping['Current_Status'],  # Current_Status 사용
-                    "location": driver._mapping['Current_Location']  # Current_Location 반환
+                    "user_id": driver._mapping['User_ID'],
+                    "name": driver._mapping['UserName'],  # UserName 추가
+                    "email": driver._mapping['Email'],  # Email 추가
+                    "phone": driver._mapping['Phone_Number'],  # Phone 추가
+                    "status": driver._mapping['Current_Status'],
+                    "location": driver._mapping['Current_Location'],
+                    "truck_info": driver._mapping['Private_Truck_Info'],
+                    "truck_id": driver._mapping['Truck_ID']
                 }
             })
         else:
@@ -150,6 +164,64 @@ def get_driver_info():
         return jsonify({"success": False, "message": "Invalid token"}), 401
     except Exception as e:
         print(f"An error occurred: {e}")  # 서버 에러 로그
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+# JWT 토큰 디코딩 함수
+def get_user_id_from_token(auth_header):
+    try:
+        # Authorization 헤더가 비어있거나 잘못된 형식일 경우 처리
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise ValueError("Invalid Authorization header")
+        
+        # "Bearer " 이후의 토큰 부분만 추출
+        token = auth_header.split(" ")[1]
+        
+        # JWT 디코딩
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        
+        # `user_id` 추출
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise ValueError("user_id not found in token")
+        
+        return user_id
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except jwt.InvalidTokenError:
+        raise ValueError("Invalid token")
+    except Exception as e:
+        raise ValueError(f"Error decoding token: {str(e)}")
+    
+@app.route('/api/update-status', methods=['POST'])
+def update_status():
+    # Authorization 헤더에서 토큰 추출
+    auth_header = request.headers.get('Authorization')
+    try:
+        # 토큰에서 user_id 추출
+        user_id = get_user_id_from_token(auth_header)
+    except ValueError as e:
+        return jsonify({"success": False, "message": str(e)}), 401
+
+    # 요청 데이터에서 status 값 가져오기
+    data = request.json
+    new_status = data.get('status')
+    valid_statuses = ['Available', 'On a Trip', 'Offline']
+
+    if not new_status:
+        return jsonify({"success": False, "message": "Status is missing"}), 400
+    if new_status not in valid_statuses:
+        return jsonify({"success": False, "message": f"Invalid status value. Must be one of {valid_statuses}"}), 400
+
+    # DB 업데이트
+    try:
+        db.session.execute(text("""
+            UPDATE Driver
+            SET Current_Status = :new_status
+            WHERE User_ID = :user_id
+        """), {"new_status": new_status, "user_id": user_id})
+        db.session.commit()
+        return jsonify({"success": True, "message": "Status updated successfully"})
+    except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
 @app.route('/api/signup', methods=['POST'])
