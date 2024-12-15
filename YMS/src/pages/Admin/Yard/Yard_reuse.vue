@@ -93,12 +93,7 @@
         departZone: "",
         arriveZone: "",
         selectedDriver: null,
-        statsCards: [
-          { type: "warning", title: "Total Trucks : ", value: 40 },
-          { type: "success", title: "Total Chassis : ", value: 30 },
-          { type: "danger", title: "Total Containers : ", value: 30 },
-          { type: "info", title: "Total Trailers : ", value: 10 },
-        ],
+        statsCards: [],
         siteStatus: [
           { name: "Truck Site", trucks: generateTrucks("T", 40, "in-dock") },
           { name: "Chassis Site", trucks: generateTrucks("C", 30, "in-parking") },
@@ -135,6 +130,37 @@
       },
     },
     methods: {
+      extractYardIdFromUrl() {
+        const fullPath = this.$route.fullPath; // 현재 URL 경로
+        const yardId = fullPath.split("/").pop(); // 마지막 경로 추출 (예: HOU_YARD_0002)
+        this.yardId = yardId;
+        console.log("Extracted Yard ID:", this.yardId);
+      },
+
+      async fetchYardStats() {
+        try {
+          const response = await axios.get("http://localhost:5000/api/yard/stats", {
+            params: { yard_id: this.yardId },
+          });
+
+          if (response.data.success) {
+            const { total_trucks, total_chassis, total_containers, total_trailers } =
+              response.data.data;
+
+            this.statsCards = [
+              { type: "warning", title: "Total Trucks", value: total_trucks },
+              { type: "success", title: "Total Chassis", value: total_chassis },
+              { type: "danger", title: "Total Containers", value: total_containers },
+              { type: "info", title: "Total Trailers", value: total_trailers },
+            ];
+          } else {
+            console.error("Failed to fetch yard stats:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Error fetching yard stats:", error.message);
+        }
+      },
+      
       ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
       selectTruck(truck) {
         // Truck(T) 또는 Trailer(TL)만 선택 가능
@@ -182,6 +208,10 @@
         this.selectedDriver = null;
       },
     },
+    mounted(){
+      this.extractYardIdFromUrl();
+      this.fetchYardStats();
+    }
   };
   </script>
   

@@ -579,3 +579,16 @@ FROM (
 WHERE CONCAT('T_', LPAD(MOD(t.num - 1, 6) + 1, 4, '0')) IN (
     SELECT Truck_ID FROM Truck -- Truck 테이블의 Truck_ID를 참조
 );
+
+
+UPDATE Truck
+SET Zone_ID = NULL
+WHERE Status = 'In Use';
+
+UPDATE Zone
+SET Status = 'In Use'
+WHERE Zone_ID IN (
+    SELECT Zone_ID
+    FROM Truck
+    WHERE Status = 'Available' AND Zone_ID IS NOT NULL
+);
