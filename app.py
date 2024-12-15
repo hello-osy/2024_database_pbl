@@ -7,7 +7,7 @@ from flask_cors import CORS
 import jwt
 from sqlalchemy.exc import SQLAlchemyError
 # import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # 비밀 키
@@ -89,7 +89,7 @@ def login():
                 token = jwt.encode({
                     'user_id': user._mapping['User_ID'],
                     'role_id': role_id,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+                    'exp': datetime.utcnow() + timedelta(hours=1)
                 }, SECRET_KEY, algorithm='HS256')
 
                 return jsonify({
@@ -591,7 +591,7 @@ def get_assigned_transport_logs():
                 Depart_Date AS depart_date,
                 Arrive_Date AS arrive_date
             FROM Transport_Log
-            WHERE Assigned = TRUE
+            WHERE Assigned = 0;
         """))
         logs = [dict(row._mapping) for row in result]
         return jsonify({"success": True, "data": logs})
@@ -849,6 +849,23 @@ def get_all_transport_logs():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route('/api/get/availableZones', methods=['GET'])
+def get_available_zones():
+    try:
+        result = db.session.execute(text("""
+            SELECT Zone_ID AS id
+            FROM Zone
+        """)).fetchall()
+
+        # _mapping 사용
+        zones = [row._mapping['id'] for row in result]
+
+        return jsonify({"success": True, "data": zones})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+
 
 @app.route('/api/transport-log', methods=['POST'])
 def register_transport_log():
@@ -881,23 +898,47 @@ def register_transport_log():
     # Assigned 필드 기본값 설정
     assigned = 0
 
+    # 현재 날짜를 Depart_Date로 설정
+    depart_date = datetime.now()
+
+    # Truck_ID를 이용하여 Depart_Zone_ID 조회
+    try:
+        result = db.session.execute(
+            text("SELECT Zone_ID FROM Truck WHERE Truck_ID = :truck_id"),
+            {"truck_id": truck_id}
+        )
+        depart_zone_id = result.scalar()  # Zone_ID를 가져옴
+
+        if not depart_zone_id:
+            return jsonify({"success": False, "message": "Depart Zone ID not found for the given Truck ID."}), 400
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error retrieving Depart Zone ID.", "error": str(e)}), 500
+
     try:
         query = """
-        INSERT INTO Transport_Log (Truck_ID, Chassis_ID, Container_ID, Trailer_ID, Arrive_Date, Arrive_Zone_ID, Driver_ID, Assigned)
-        VALUES (:truck_id, :chassis_id, :container_id, :trailer_id, :arrive_date, :arrive_zone, :driver_id, :assigned)
+        INSERT INTO Transport_Log (
+            Driver_ID, Container_ID, Chassis_ID, Truck_ID, Trailer_ID,
+            Depart_Zone_ID, Depart_Date, Arrive_Zone_ID, Arrive_Date, Assigned
+        )
+        VALUES (
+            :driver_id, :container_id, :chassis_id, :truck_id, :trailer_id,
+            :depart_zone_id, :depart_date, :arrive_zone, :arrive_date, :assigned
+        )
         """
 
         db.session.execute(
             text(query),
             {
-                "truck_id": truck_id,
-                "chassis_id": chassis_id,
-                "container_id": container_id,
-                "trailer_id": trailer_id,
-                "arrive_date": arrive_date,
-                "arrive_zone": arrive_zone,
                 "driver_id": driver_id,
-                "assigned": assigned,  # Assigned 필드 값 설정
+                "container_id": container_id,
+                "chassis_id": chassis_id,
+                "truck_id": truck_id,
+                "trailer_id": trailer_id,
+                "depart_zone_id": depart_zone_id,
+                "depart_date": depart_date,
+                "arrive_zone": arrive_zone,
+                "arrive_date": arrive_date,
+                "assigned": assigned,
             }
         )
 

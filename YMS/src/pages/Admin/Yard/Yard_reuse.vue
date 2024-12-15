@@ -69,8 +69,16 @@
               <label>Arrival Date:</label>
               <input v-model="arriveDate" type="date" placeholder="Select arrival date" />
 
+              <!-- <label>Arrive Zone:</label>
+              <input v-model="arriveZone" placeholder="Enter arrival zone" /> -->
+
               <label>Arrive Zone:</label>
-              <input v-model="arriveZone" placeholder="Enter arrival zone" />
+              <select v-model="arriveZone">
+                <option v-for="zone in zones" :key="zone" :value="zone">
+                  {{ zone }}
+                </option>
+              </select>
+
 
               <label>Assign Driver:</label>
               <select v-model="selectedDriver">
@@ -107,6 +115,7 @@
         statsCards: [],
         siteStatus: [],
         drivers: [],
+        zones: [],
       };
     },
     computed: {
@@ -220,6 +229,23 @@
         }
       },
       
+
+      async fetchZones() {
+        try {
+          const response = await axios.get("http://localhost:8080/api/get/availableZones");
+          if (response.data.success) {
+            this.zones = response.data.data; // Zone_ID 배열만 저장
+            console.log("Zones fetched successfully:", this.zones);
+          } else {
+            console.error("Failed to fetch zones:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Error fetching zones:", error.message);
+        }
+      },
+
+
+
       async submitToServer() {
         const payload = {
           truck: this.selectedTruck,
@@ -345,6 +371,7 @@
         this.fetchYardStats(); // 새 데이터를 다시 요청
         this.fetchDriverStats();
         this.fetchSiteStats();
+        this.fetchZones(); // Zone_ID 데이터 가져오기
       },
     },
     mounted(){
@@ -352,6 +379,7 @@
       this.fetchYardStats();
       this.fetchDriverStats();
       this.fetchSiteStats();
+      this.fetchZones(); // Zone_ID 데이터 가져오기
     }
   };
   </script>
