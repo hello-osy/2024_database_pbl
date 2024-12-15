@@ -677,6 +677,103 @@ def get_transport_logs_by_driver():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route('/api/yard/stats', methods=['GET'])
+def get_yard_stats():
+    # URL에서 yard_id 가져오기
+    yard_id = request.args.get('yard_id')
+    
+    if not yard_id:
+        return jsonify({"success": False, "message": "yard_id is required"}), 400
+
+    try:
+        # Truck 갯수 쿼리
+        truck_count_query = """
+            select count(Truck_ID) from Truck where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Truck'));
+        """
+        truck_result = db.session.execute(text(truck_count_query), {"yard_id": yard_id})
+        truck_count = truck_result.scalar()  # 단일 값 가져오기
+
+        # Chassis 갯수 쿼리
+        chassis_count_query = """
+            select count(Chassis_ID) from Chassis where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Chassis'));
+        """
+        chassis_result = db.session.execute(text(chassis_count_query), {"yard_id": yard_id})
+        chassis_count = chassis_result.scalar()
+
+        # Container 갯수 쿼리
+        container_count_query = """
+            select count(Container_ID) from Container where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Container'));
+        """
+        container_result = db.session.execute(text(container_count_query), {"yard_id": yard_id})
+        container_count = container_result.scalar()
+
+        # Trailer 갯수 쿼리
+        trailer_count_query = """
+            select count(Trailer_ID) from Trailer where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Trailer'));
+        """
+        trailer_result = db.session.execute(text(trailer_count_query), {"yard_id": yard_id})
+        trailer_count = trailer_result.scalar()
+
+        # 결과 반환
+        return jsonify({
+            "success": True,
+            "data": {
+                "total_trucks": truck_count,
+                "total_chassis": chassis_count,
+                "total_containers": container_count,
+                "total_trailers": trailer_count,
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+
+@app.route('/api/driver/stats', methods=['GET'])
+def get_driver_stats():
+    # URL에서 yard_id 가져오기
+    yard_id = request.args.get('yard_id')
+    
+    if not yard_id:
+        return jsonify({"success": False, "message": "yard_id is required"}), 400
+
+    try:
+        # SQL 쿼리 실행
+        query = """
+        SELECT User_ID, Current_Location, Current_Status
+        FROM Driver 
+        WHERE Current_Location IN (
+            SELECT Division_ID FROM Yard WHERE Yard_ID = :yard_id
+        );
+        """
+        query_result = db.session.execute(text(query), {"yard_id": yard_id}).fetchall()
+
+        # 튜플의 인덱스로 접근
+        drivers = [
+            {
+                "User_ID": row[0],  # 첫 번째 컬럼
+                "Current_Location": row[1],  # 두 번째 컬럼
+                "Current_Status": row[2]  # 세 번째 컬럼
+            }
+            for row in query_result
+        ]
+
+        # JSON 형태로 응답
+        return jsonify({
+            "success": True,
+            "data": drivers
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": "An error occurred",
+            "error": str(e)
+        }), 500
+
+
+
+
 
 # Flask 애플리케이션 실행
 if __name__ == "__main__":

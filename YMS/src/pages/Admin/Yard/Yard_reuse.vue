@@ -75,7 +75,8 @@
   
   <script>
   import { mapActions } from "vuex";
-  
+  import axios from "axios";
+
   export default {
     data() {
       const generateTrucks = (prefix, count, status) => {
@@ -101,9 +102,9 @@
           { name: "Trailer Site", trucks: generateTrucks("TL", 10, "in-parking") },
         ],
         drivers: [
-          { User_ID: "D001", Current_Location: "Zone A", Current_Status: "Active" },
-          { User_ID: "D002", Current_Location: "Zone B", Current_Status: "Inactive" },
-          { User_ID: "D003", Current_Location: "Zone C", Current_Status: "On Break" },
+          // { User_ID: "D001", Current_Location: "Zone A", Current_Status: "Active" },
+          // { User_ID: "D002", Current_Location: "Zone B", Current_Status: "Inactive" },
+          // { User_ID: "D003", Current_Location: "Zone C", Current_Status: "On Break" },
         ],
       };
     },
@@ -136,10 +137,9 @@
         this.yardId = yardId;
         console.log("Extracted Yard ID:", this.yardId);
       },
-
-      async fetchYardStats() {
+      async fetchYardStats(){
         try {
-          const response = await axios.get("http://localhost:5000/api/yard/stats", {
+          const response = await axios.get("http://localhost:8080/api/yard/stats", {
             params: { yard_id: this.yardId },
           });
 
@@ -160,6 +160,23 @@
           console.error("Error fetching yard stats:", error.message);
         }
       },
+
+      async fetchDriverStats() {
+      try {
+        const response = await axios.get("http://localhost:8080/api/driver/stats", {
+          params: { yard_id: this.yardId },
+        });
+
+        if (response.data.success) {
+          this.drivers = response.data.data;
+          console.log("Driver stats fetched successfully:", this.drivers);
+        } else {
+          console.error("Failed to fetch driver stats:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching driver stats:", error.message);
+      }
+    },
       
       ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
       selectTruck(truck) {
@@ -208,9 +225,19 @@
         this.selectedDriver = null;
       },
     },
+    // URL 변경 감지
+    watch: {
+      $route(to, from) {
+        console.log("Route changed:", from.fullPath, "to:", to.fullPath);
+        this.extractYardIdFromUrl(); // URL에서 Yard ID 다시 추출
+        this.fetchYardStats(); // 새 데이터를 다시 요청
+        this.fetchDriverStats();
+      },
+    },
     mounted(){
       this.extractYardIdFromUrl();
       this.fetchYardStats();
+      this.fetchDriverStats();
     }
   };
   </script>
