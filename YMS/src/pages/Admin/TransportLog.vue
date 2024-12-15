@@ -69,11 +69,11 @@ export default {
             driver: log.driver,
             vehicle: log.vehicle,
             status: log.status,
-            departDate: new Date(log.date), // Depart Date
-            arriveDate: new Date(log.date).setDate(new Date(log.date).getDate() + 1), // Arrive Date 계산
-            departZone: log.departZone,
-            arriveZone: log.arriveZone,
-            memo: log.memo,
+            departDate: log.departDate ? new Date(log.departDate) : null, // null 체크 추가
+            arriveDate: log.arriveDate ? new Date(log.arriveDate) : null, // null 체크 추가
+            departZone: log.departZone || "N/A", // 기본값 설정
+            arriveZone: log.arriveZone || "N/A", // 기본값 설정
+            memo: log.memo || "No memo provided", // 기본값 설정
           }));
         } else {
           console.error(
@@ -106,9 +106,10 @@ export default {
       this.selectedMemo = "";
     },
     getStatusClass(status) {
-      if (status === "Completed") return "completed";
-      if (status === "In Progress") return "in-progress";
-      if (status === "Scheduled") return "scheduled";
+      if (status === "Completed") return "Completed";
+      if (status === "Delivering") return "Delivering";
+      if (status === "Reserved") return "Reserved";
+      if (status === "Rejected") return "Rejected";
       return "";
     },
   },
@@ -168,15 +169,19 @@ p {
   background-color: #f9f9f9;
 }
 
-.log-table .completed {
+.log-table .Rejected {
+  color: #ff0000ce;
+}
+
+.log-table .Completed {
   color: #28a745;
 }
 
-.log-table .in-progress {
+.log-table .Delivering {
   color: #ffc107;
 }
 
-.log-table .scheduled {
+.log-table .Reserved {
   color: #007bff;
 }
 

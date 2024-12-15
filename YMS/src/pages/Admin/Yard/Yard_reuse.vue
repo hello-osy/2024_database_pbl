@@ -1,44 +1,43 @@
 <template>
-  <!-- <<<<<<< HEAD -->
-    <div class="yard-content">
-      <div class="search-bar">
-        <input v-model="searchQuery" type="text" placeholder="Search by ID (e.g., T_001, C_002)" />
+  <div class="yard-content">
+    <div class="search-bar">
+      <input v-model="searchQuery" type="text" placeholder="Search by ID (e.g., T_001, C_002)" />
+    </div>
+
+    <div class="stats-row">
+      <div class="stats-card" v-for="stats in statsCards" :key="stats.title">
+        <div class="stats-content">
+          <div class="stats-title">{{ stats.title }}</div>
+          <div class="stats-value">{{ stats.value }}</div>
+        </div>
       </div>
-  
-      <div class="stats-row">
-        <div class="stats-card" v-for="stats in statsCards" :key="stats.title">
-          <div class="stats-content">
-            <div class="stats-title">{{ stats.title }}</div>
-            <div class="stats-value">{{ stats.value }}</div>
+    </div>
+
+    <div class="yard-layout">
+      <div class="site-block" v-for="(site, index) in filteredSiteStatus" :key="index">
+        <h3 class="site-title">{{ site.name }}</h3>
+        <div class="truck-list">
+          <div
+            v-for="truck in site.trucks"
+            :key="truck.id"
+            :class="['truck-icon', truck.status, { assigned: isAssigned(truck) }]"
+            @click="selectTruck(truck)"
+          >
+            {{ truck.id }}
           </div>
         </div>
       </div>
-  
-      <div class="yard-layout">
-        <div class="site-block" v-for="(site, index) in filteredSiteStatus" :key="index">
-          <h3 class="site-title">{{ site.name }}</h3>
-          <div class="truck-list">
-            <div
-              v-for="truck in site.trucks"
-              :key="truck.id"
-              :class="['truck-icon', truck.status, { assigned: isAssigned(truck) }]"
-              @click="selectTruck(truck)"
-            >
-              {{ truck.id }}
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Truck만 선택 가능한 Modal -->
-      <div v-if="selectedTruck && (selectedTruck.id.startsWith('T'))" class="modal">
-        <div class="modal-content">
-          <h3>
-            Configure {{ selectedTruck.id.startsWith('TL') ? 'Trailer' : 'Truck' }} {{ selectedTruck.id }}
-          </h3>
-          
-          <div v-if="selectedTruck && !selectedTruck.id.startsWith('TL')">
-          
+    </div>
+
+    <!-- Truck만 선택 가능한 Modal -->
+    <div v-if="selectedTruck && (selectedTruck.id.startsWith('T'))" class="modal">
+      <div class="modal-content">
+        <h3>
+          Configure {{ selectedTruck.id.startsWith('TL') ? 'Trailer' : 'Truck' }} {{ selectedTruck.id }}
+        </h3>
+        
+        <div v-if="selectedTruck && !selectedTruck.id.startsWith('TL')">
+        
           <div class="modal-grid">
           <!-- Left Column -->
             <div class="modal-column">
@@ -73,11 +72,37 @@
               <input v-model="arriveZone" placeholder="Enter arrival zone" /> -->
 
               <label>Arrive Zone:</label>
-              <select v-model="arriveZone">
+              <!-- <select v-model="arriveZone">
                 <option v-for="zone in zones" :key="zone" :value="zone">
                   {{ zone }}
                 </option>
-              </select>
+              </select> -->
+              <div class="custom-select-container">
+                <!-- 입력창: 검색 및 선택된 값을 표시 -->
+                <input
+                  v-model="zoneSearchQuery"
+                  @focus="showDropdown = true"
+                  @blur="hideDropdown"
+                  type="text"
+                  placeholder="Search and select a zone"
+                  class="search-input"
+                />
+                <!-- 드롭다운 목록 -->
+                <ul v-if="showDropdown" class="dropdown-list">
+                  <li
+                    v-for="zone in filteredZones"
+                    :key="zone"
+                    @mousedown.prevent="selectZone(zone)"
+                    class="dropdown-item"
+                  >
+                    {{ zone }}
+                  </li>
+                  <li v-if="filteredZones.length === 0" class="dropdown-item empty">
+                    No matching zones found
+                  </li>
+                </ul>
+              </div>
+
 
 
               <label>Assign Driver:</label>
@@ -94,7 +119,8 @@
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
   
   <script>
   import { mapActions } from "vuex";
@@ -116,9 +142,18 @@
         siteStatus: [],
         drivers: [],
         zones: [],
+        zoneSearchQuery: "", // 검색 입력 값
+        showDropdown: false, // 드롭다운 표시 여부
       };
     },
     computed: {
+      filteredZones() {
+        // 검색어에 맞는 Zone 필터링
+        return this.zones.filter((zone) =>
+          zone.toLowerCase().includes(this.zoneSearchQuery.toLowerCase())
+        );
+      },
+
       filteredSiteStatus() {
         if (!this.searchQuery) {
           return this.siteStatus;
@@ -325,6 +360,13 @@
           return;
         }
 
+        if (!this.zones.includes(this.arriveZone)) {
+          console.log("ZONES DATA: ", zones)
+          alert("The selected Arrive Zone is invalid. Please select a valid zone from the list.");
+          this.arriveZone = "";
+          return; // 검증 실패 시 제출 중단
+        }
+
         // 입력값이 모두 유효한 경우
         const newAssignments = [this.selectedTruck, this.selectedChassis, this.selectedContainer]
           .filter(Boolean)
@@ -361,6 +403,18 @@
         this.departZone = "";
         this.arriveZone = "";
         this.selectedDriver = null;
+      },
+      selectZone(zone) {
+        // Zone 선택 시 입력창에 값 반영
+        this.arriveZone = zone;
+        this.zoneSearchQuery = zone;
+        this.showDropdown = false; // 드롭다운 숨기기
+      },
+      hideDropdown() {
+        // 입력 필드에서 포커스가 벗어나면 드롭다운 숨김
+        setTimeout(() => {
+          this.showDropdown = false;
+        }, 200);
       },
     },
     // URL 변경 감지
@@ -593,6 +647,50 @@
 .modal-buttons button {
   flex: 1;
   margin: 0 10px;
+}
+
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 150px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow-y: auto;
+  z-index: 1000;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+.dropdown-item.empty {
+  color: #999;
+  text-align: center;
 }
 
 </style>
