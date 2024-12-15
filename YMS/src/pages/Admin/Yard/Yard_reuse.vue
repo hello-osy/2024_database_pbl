@@ -79,12 +79,12 @@
 
   export default {
     data() {
-      const generateTrucks = (prefix, count, status) => {
-        return Array.from({ length: count }, (_, i) => ({
-          id: `${prefix}_${String(i + 1).padStart(3, "0")}`,
-          status: status,
-        }));
-      };
+      // const generateTrucks = (prefix, count, status) => {
+      //   return Array.from({ length: count }, (_, i) => ({
+      //     id: `${prefix}_${String(i + 1).padStart(3, "0")}`,
+      //     status: status,
+      //   }));
+      // };
   
       return {
         searchQuery: "",
@@ -96,10 +96,10 @@
         selectedDriver: null,
         statsCards: [],
         siteStatus: [
-          { name: "Truck Site", trucks: generateTrucks("T", 40, "in-dock") },
-          { name: "Chassis Site", trucks: generateTrucks("C", 30, "in-parking") },
-          { name: "Container Site", trucks: generateTrucks("CT", 30, "in-dock") },
-          { name: "Trailer Site", trucks: generateTrucks("TL", 10, "in-parking") },
+          // { name: "Truck Site", trucks: generateTrucks("T", 40, "in-dock") },
+          // { name: "Chassis Site", trucks: generateTrucks("C", 30, "in-parking") },
+          // { name: "Container Site", trucks: generateTrucks("CT", 30, "in-dock") },
+          // { name: "Trailer Site", trucks: generateTrucks("TL", 10, "in-parking") },
         ],
         drivers: [
           // { User_ID: "D001", Current_Location: "Zone A", Current_Status: "Active" },
@@ -162,22 +162,62 @@
       },
 
       async fetchDriverStats() {
-      try {
-        const response = await axios.get("http://localhost:8080/api/driver/stats", {
-          params: { yard_id: this.yardId },
-        });
+        try {
+          const response = await axios.get("http://localhost:8080/api/driver/stats", {
+            params: { yard_id: this.yardId },
+          });
 
-        if (response.data.success) {
-          this.drivers = response.data.data;
-          console.log("Driver stats fetched successfully:", this.drivers);
-        } else {
-          console.error("Failed to fetch driver stats:", response.data.message);
+          if (response.data.success) {
+            this.drivers = response.data.data;
+            console.log("Driver stats fetched successfully:", this.drivers);
+          } else {
+            console.error("Failed to fetch driver stats:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Error fetching driver stats:", error.message);
         }
-      } catch (error) {
-        console.error("Error fetching driver stats:", error.message);
-      }
-    },
+      },
       
+      async fetchSiteStats() {
+        try {
+          const response = await axios.get("http://localhost:8080/api/yard/siteStatus", {
+            params: { yard_id: this.yardId },
+          });
+
+          if (response.data.success) {
+            // JSON 데이터를 siteStatus 포맷으로 변환
+            this.siteStatus = response.data.data.map((site) => ({
+              name: site.name,
+              trucks: [
+                ...site.equipments.Truck.map((truck) => ({
+                  id: truck.id,
+                  status: truck.status,
+                })),
+                ...site.equipments.Chassis.map((chassis) => ({
+                  id: chassis.id,
+                  status: chassis.status,
+                })),
+                ...site.equipments.Container.map((container) => ({
+                  id: container.id,
+                  status: container.status,
+                })),
+                ...site.equipments.Trailer.map((trailer) => ({
+                  id: trailer.id,
+                  status: trailer.status,
+                })),
+              ],
+            }));
+            console.log("Updated siteStatus:", this.siteStatus);
+          } else {
+            console.error("Failed to fetch site status:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Error fetching site status:", error.message);
+        }
+      },
+
+
+
       ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
       selectTruck(truck) {
         // Truck(T) 또는 Trailer(TL)만 선택 가능
@@ -232,213 +272,214 @@
         this.extractYardIdFromUrl(); // URL에서 Yard ID 다시 추출
         this.fetchYardStats(); // 새 데이터를 다시 요청
         this.fetchDriverStats();
+        this.fetchSiteStats();
       },
     },
     mounted(){
       this.extractYardIdFromUrl();
       this.fetchYardStats();
       this.fetchDriverStats();
+      this.fetchSiteStats();
     }
   };
   </script>
   
-  <style scoped>
-  .yard-content {
-    padding: 20px;
-  }
-  
-  .search-bar {
-    margin-bottom: 20px;
-  }
-  
-  .search-bar input {
-    width: 100%;
-    padding: 10px;
-    font-size: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-sizing: border-box;
-  }
-  
-  .stats-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 30px;
-    justify-content: space-between;
-  }
-  
-  .stats-card {
-    flex: 1;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    color: #000000;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .stats-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-  }
-  
-  .stats-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .stats-title {
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    font-weight: bold;
-  }
-  
-  .stats-value {
-    font-size: 2rem;
-    font-weight: bold;
-  }
-  
-  .yard-layout {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    width: 100%;
-  }
-  
-  .site-block {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .site-title {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-    color: #333;
-  }
-  
-  .truck-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .truck-icon {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #fff;
-    text-align: center;
-  }
-  
-  .in-dock {
-    background-color: #007bff;
-  }
-  .in-parking {
-    background-color: #28a745;
-  }
-  .assigned {
-    border: 2px solid #ffa726;
-    box-shadow: 0 0 8px #ffa726;
-  }
-  
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  .modal-content {
-    background: #fff;
-    padding: 20px 30px;
-    border-radius: 15px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    text-align: center;
-  }
-  
-  .modal-content h3 {
-    margin-bottom: 20px;
-    font-size: 1.5rem;
-    color: #333;
-  }
-  
-  .modal-content label {
-    display: block;
-    margin: 10px 0 5px;
-    font-size: 1rem;
-    color: #555;
-  }
-  
-  .modal-content select,
-  .modal-content input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-    font-size: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-  
-  .modal-content button {
-    margin: 10px 5px;
-    padding: 10px 20px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .modal-content button:first-child {
-    background-color: #28a745;
-    color: white;
-  }
-  
-  .modal-content button:first-child:hover {
-    background-color: #218838;
-  }
-  
-  .modal-content button:last-child {
-    background-color: #dc3545;
-    color: white;
-  }
-  
-  .modal-content button:last-child:hover {
-    background-color: #c82333;
-  }
-  </style>
-  <!-- =======
-    <Yard :yardId="'HOU_YARD_0001'" />
-  </template>
-  
-  <script>
-  import Yard from "@/pages/Admin/Yard/Yard.vue";
-  
-  export default {
-    components: {
-      Yard,
-    },
-  };
-  </script>
-  >>>>>>> develop -->
-  
+<style scoped>
+.yard-content {
+  padding: 20px;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+.stats-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  justify-content: space-between;
+}
+
+.stats-card {
+  flex: 1;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.stats-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stats-title {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.stats-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.yard-layout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+.site-block {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.site-title {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.truck-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.truck-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
+.in-dock {
+  background-color: #007bff;
+}
+.Available {
+  background-color: #28a745;
+}
+.In-Use{
+  border: 2px solid #ffa726;
+  box-shadow: 0 0 8px #ffa726;
+}
+
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 15px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.modal-content h3 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-content label {
+  display: block;
+  margin: 10px 0 5px;
+  font-size: 1rem;
+  color: #555;
+}
+
+.modal-content select,
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.modal-content button {
+  margin: 10px 5px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content button:first-child {
+  background-color: #28a745;
+  color: white;
+}
+
+.modal-content button:first-child:hover {
+  background-color: #218838;
+}
+
+.modal-content button:last-child {
+  background-color: #dc3545;
+  color: white;
+}
+
+.modal-content button:last-child:hover {
+  background-color: #c82333;
+}
+</style>
+<!-- =======
+  <Yard :yardId="'HOU_YARD_0001'" />
+</template>
+
+<script>
+import Yard from "@/pages/Admin/Yard/Yard.vue";
+
+export default {
+  components: {
+    Yard,
+  },
+};
+</script>
+>>>>>>> develop -->

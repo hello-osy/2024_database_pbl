@@ -773,6 +773,67 @@ def get_driver_stats():
 
 
 
+@app.route('/api/yard/siteStatus', methods=['GET'])
+def get_site_status():
+    yard_id = request.args.get('yard_id')
+
+    if not yard_id:
+        return jsonify({"success": False, "message": "yard_id is required"}), 400
+
+    try:
+        # Truck 데이터 가져오기
+        truck_query = """
+        select Truck_ID AS id, Status AS status from Truck where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Truck'));
+        """
+        truck_result = db.session.execute(text(truck_query), {"yard_id": yard_id}).fetchall()
+
+        # Chassis 데이터 가져오기
+        chassis_query = """
+        select Chassis_ID AS id, Status AS status from Chassis where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Chassis'));
+        """
+        chassis_result = db.session.execute(text(chassis_query), {"yard_id": yard_id}).fetchall()
+
+        # Container 데이터 가져오기
+        container_query = """
+        select Container_ID AS id, Status AS status from Container where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Container'));
+        """
+        container_result = db.session.execute(text(container_query), {"yard_id": yard_id}).fetchall()
+
+        # Trailer 데이터 가져오기
+        trailer_query = """
+        select Trailer_ID AS id, Status AS status from Trailer where Zone_ID in (select Zone_ID from Zone where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type='Trailer'));
+        """
+        trailer_result = db.session.execute(text(trailer_query), {"yard_id": yard_id}).fetchall()
+
+        # 데이터를 사이트별로 그룹화
+        sites = {
+            "Truck Site": {"name": "Truck Site", "equipments": {"Truck": [], "Chassis": [], "Container": [], "Trailer": []}},
+            "Chassis Site": {"name": "Chassis Site", "equipments": {"Truck": [], "Chassis": [], "Container": [], "Trailer": []}},
+            "Container Site": {"name": "Container Site", "equipments": {"Truck": [], "Chassis": [], "Container": [], "Trailer": []}},
+            "Trailer Site": {"name": "Trailer Site", "equipments": {"Truck": [], "Chassis": [], "Container": [], "Trailer": []}},
+        }
+
+        # Truck 데이터 추가
+        for row in truck_result:
+            sites["Truck Site"]["equipments"]["Truck"].append({"id": row[0], "status": row[1]})
+
+        # Chassis 데이터 추가
+        for row in chassis_result:
+            sites["Chassis Site"]["equipments"]["Chassis"].append({"id": row[0], "status": row[1]})
+
+        # Container 데이터 추가
+        for row in container_result:
+            sites["Container Site"]["equipments"]["Container"].append({"id": row[0], "status": row[1]})
+
+        # Trailer 데이터 추가
+        for row in trailer_result:
+            sites["Trailer Site"]["equipments"]["Trailer"].append({"id": row[0], "status": row[1]})
+
+        # JSON 응답
+        return jsonify({"success": True, "data": list(sites.values())})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
 
 # Flask 애플리케이션 실행
