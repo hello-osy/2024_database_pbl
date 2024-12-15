@@ -565,10 +565,7 @@ SELECT
     DATE_ADD(CURDATE(), INTERVAL t.num DAY) AS Depart_Date, -- 출발 날짜
     CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Arrive_Zone_ID, -- 도착 Zone
     DATE_ADD(CURDATE(), INTERVAL t.num + 1 DAY) AS Arrive_Date, -- 도착 날짜
-    CASE
-        WHEN MOD(t.num, 2) = 0 THEN TRUE -- 짝수일 경우 Assigned = TRUE
-        ELSE FALSE -- 홀수일 경우 Assigned = FALSE
-    END AS Assigned,
+    0 AS Assigned,
     CONCAT('Transport log entry #', t.num) AS Log_Memo -- 로그 메모
 FROM (
     -- 숫자 1부터 20까지 생성

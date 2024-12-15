@@ -24,7 +24,14 @@
           <p><strong>Depart Date:</strong> {{ trip.departDate }}</p>
           <p><strong>Arrive Date:</strong> {{ trip.arriveDate }}</p>
           <div v-if="trip.assigned === 0" class="action-buttons">
-            <button @click="acceptTrip(trip.id)">Accept</button>
+            <button
+              :disabled="
+                assigningTrip || hasInProgressTrip || trip.assigned !== 0
+              "
+              @click.once="handleAccept(trip.id)"
+            >
+              Accept
+            </button>
             <button @click="declineTrip(trip.id)">Decline</button>
           </div>
           <div v-else-if="trip.assigned === 1" class="action-buttons">
@@ -50,6 +57,7 @@ export default {
     return {
       filterStatus: "all", // Default filter
       trips: [],
+      assigningTrip: false, // 현재 할당 중인지 추적
     };
   },
   computed: {
@@ -65,6 +73,10 @@ export default {
         if (this.filterStatus === "completed") return trip.assigned === 2; // completed
         return false; // 기본 값
       });
+    },
+    hasInProgressTrip() {
+      // 진행 중인 작업이 있는지 확인
+      return this.trips.some((trip) => trip.assigned === 1);
     },
   },
   methods: {
@@ -101,35 +113,76 @@ export default {
         console.error("An error occurred while fetching trips:", error);
       }
     },
-    markCompleted(logId) {
-      const tripIndex = this.trips.findIndex((t) => t.id === logId);
-      if (tripIndex !== -1) {
-        this.updateTripStatus(logId, true, true) // 서버에서 상태 업데이트
-          .then(() => {
-            this.trips[tripIndex].assigned = 2; // 새로운 상태값 설정
-            console.log(`Trip ${logId} marked as completed.`);
-          })
-          .catch((error) => {
-            console.error(`Failed to mark trip ${logId} as completed:`, error);
-          });
+    async markCompleted(logId) {
+      try {
+        await this.updateTripStatus(logId, 1, true); // 서버에서 상태 업데이트
+        await this.fetchTrips(); // 최신 데이터 가져오기
+      } catch (error) {
+        console.error(`Failed to mark trip ${logId} as completed:`, error);
       }
     },
-    acceptTrip(logId) {
+    async handleAccept(logId) {
+      console.log("현재 assigningTrip 상태: ", this.assigningTrip);
+
+      // 진행 중인 작업이 있는지 확인
+      if (this.hasInProgressTrip) {
+        this.showInProgressAlert(); // 알림 메시지 호출
+        return; // 함수 종료
+      }
+      if (this.assigningTrip) {
+        console.warn("assigningTrip 상태로 인해 중단됨.");
+        return;
+      }
+      this.assigningTrip = true;
+      console.log("assigningTrip 상태: ", this.assigningTrip);
+
+      try {
+        // 서버에 상태 업데이트 요청
+        const response = await this.updateTripStatus(logId, 1);
+        if (response && response.success) {
+          // 최신 데이터 가져와 상태 동기화
+          console.log(`Trip ${logId} accepted successfully.`);
+          await this.fetchTrips();
+        } else {
+          console.error("Failed to accept trip.");
+        }
+      } catch (error) {
+        console.error("Error while accepting trip:", error);
+      } finally {
+        this.assigningTrip = false;
+        console.log("assigningTrip 상태: ", this.assigningTrip);
+      }
+    },
+    async acceptTrip(logId) {
       const tripIndex = this.trips.findIndex((t) => t.id === logId);
       if (tripIndex !== -1) {
-        this.trips[tripIndex].assigned = true;
+        this.trips[tripIndex].assigned = 1;
         this.trips[tripIndex].status = "upcoming"; // 상태 필드 업데이트
-        this.updateTripStatus(logId, true);
+        await this.updateTripStatus(logId, 1);
       }
     },
-    declineTrip(logId) {
-      const tripIndex = this.trips.findIndex((t) => t.id === logId);
-      if (tripIndex !== -1) {
-        this.trips.splice(tripIndex, 1); // 로컬에서 즉시 제거
-        this.updateTripStatus(logId, -1); // 거부된 상태를 서버에 전달
+    async declineTrip(logId) {
+      try {
+        await this.updateTripStatus(logId, -1); // 거부된 상태를 서버에 전달
+        await this.fetchTrips(); // 최신 데이터 가져오기
+      } catch (error) {
+        console.error(`Failed to decline trip ${logId}:`, error);
       }
+    },
+    showInProgressAlert() {
+      alert(
+        "You already have an assigned trip in progress. You cannot accept a new trip until the current one is completed.",
+      );
     },
     async updateTripStatus(logId, assigned, completed = false) {
+      console.log(
+        "Update 요청 시작됨. Log ID:",
+        logId,
+        "Assigned:",
+        assigned,
+        "Completed:",
+        completed,
+      );
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
@@ -143,18 +196,22 @@ export default {
             body: JSON.stringify({ log_id: logId, assigned, completed }),
           },
         );
-        if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
-        }
-        return response.json(); // 성공 시 JSON 반환
+        console.log("서버 응답 상태:", response.status);
+        const result = await response.json();
+        console.log("서버 응답 데이터:", result);
+
+        return result;
       } catch (error) {
-        console.error("An error occurred while updating trip status:", error);
+        console.error("Error updating trip status:", error);
         throw error; // 에러를 호출부로 전달
       }
     },
   },
   mounted() {
     this.fetchTrips();
+    console.log("현재 trips 상태:", this.trips);
+    console.log("현재 assigningTrip 상태:", this.assigningTrip);
+    console.log("hasInProgressTrip 상태:", this.hasInProgressTrip);
   },
 };
 </script>
