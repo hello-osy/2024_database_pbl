@@ -5,6 +5,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
 from flask_cors import CORS
 import jwt
+from sqlalchemy.exc import SQLAlchemyError
 # import datetime
 from datetime import datetime
 
@@ -860,49 +861,37 @@ def register_transport_log():
     if data.get("trailer") and (data.get("chassis") or data.get("container")):
         return jsonify({"success": False, "message": "Cannot have both trailer and chassis/container."}), 400
 
-    # 기본값 설정 (없을 경우 NULL로 처리)
-    truck_id = data.get("truck")
-    driver_id = data.get("driver")
-    chassis_id = data.get("chassis")
-    container_id = data.get("container")
-    trailer_id = data.get("trailer")
-    depart_zone_id = data.get("departZone") or None
-    depart_date = data.get("departDate") or None
-    arrive_zone_id = data.get("arriveZone")
-    arrive_date = data.get("arriveDate")
-    log_memo = data.get("logMemo") or None
+    # 입력 데이터 처리
+    truck_id = data["truck"]["id"]
+    chassis_id = data.get("chassis", {}).get("id")  # 선택적
+    container_id = data.get("container", {}).get("id")  # 선택적
+    trailer_id = data.get("trailer", {}).get("id") if data.get("trailer") else None  # 선택적
+    arrive_zone = data["arriveZone"]
+    driver_id = data["driver"]
+
+    # Assigned 필드 기본값 설정
     assigned = 0
 
     try:
-        # 데이터 삽입 쿼리
         query = """
-        INSERT INTO Transport_Log (
-            Driver_ID, Container_ID, Chassis_ID, Truck_ID, Trailer_ID,
-            Depart_Zone_ID, Depart_Date, Arrive_Zone_ID, Arrive_Date,
-            Assigned, Log_Memo
-        )
-        VALUES (
-            :driver_id, :container_id, :chassis_id, :truck_id, :trailer_id,
-            :depart_zone_id, :depart_date, :arrive_zone_id, :arrive_date,
-            :assigned, :log_memo
-        )
+        INSERT INTO Transport_Log (Truck_ID, Chassis_ID, Container_ID, Trailer_ID, Arrive_Date, Arrive_Zone_ID, Driver_ID, Assigned)
+        VALUES (:truck_id, :chassis_id, :container_id, :trailer_id, :arrive_date, :arrive_zone, :driver_id, :assigned)
         """
+
         db.session.execute(
             text(query),
             {
-                "driver_id": driver_id,
-                "container_id": container_id,
-                "chassis_id": chassis_id,
                 "truck_id": truck_id,
+                "chassis_id": chassis_id,
+                "container_id": container_id,
                 "trailer_id": trailer_id,
-                "depart_zone_id": depart_zone_id,
-                "depart_date": depart_date,
-                "arrive_zone_id": arrive_zone_id,
                 "arrive_date": arrive_date,
-                "assigned": assigned,
-                "log_memo": log_memo,
-            },
+                "arrive_zone": arrive_zone,
+                "driver_id": driver_id,
+                "assigned": assigned,  # Assigned 필드 값 설정
+            }
         )
+
         db.session.commit()
         return jsonify({"success": True, "message": "Transport log registered successfully!"})
 
