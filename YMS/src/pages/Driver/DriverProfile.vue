@@ -69,7 +69,7 @@ export default {
         phone: "",
         email: "",
         address: "",
-        vehicle: "",
+        vehicle: "Not assigned",
         privateTruckInfo: "",
         tripsCompleted: 0,
         monthlyEarnings: 0,
@@ -105,17 +105,22 @@ export default {
               phone: driverInfo.phone || "Not provided",
               email: driverInfo.email || "Not provided",
               address: driverInfo.address || "Not provided",
-              vehicle: driverInfo.vehicle || "Not assigned",
+              truck_id: driverInfo.truck_id || "Not assigned",
               privateTruckInfo: driverInfo.truck_info || "Not assigned",
+              tripsCompleted: driverInfo.tripsCompleted || 0,
+              monthlyEarnings: driverInfo.monthlyEarnings
+                ? `$${parseFloat(driverInfo.monthlyEarnings).toFixed(2)}`
+                : "$0.00",
+              averageRatings: driverInfo.averageRatings
+                ? `parseFloat(driverInfo.averageRatings).toFixed(2)`
+                : "0.00",
             };
 
-            this.driver.tripsCompleted = driverInfo.tripsCompleted || 0;
-            this.driver.monthlyEarnings = driverInfo.monthlyEarnings
-              ? `$${parseFloat(driverInfo.monthlyEarnings).toFixed(2)}`
-              : "$0.00";
-            this.driver.averageRatings = driverInfo.averageRatings
-              ? parseFloat(driverInfo.averageRatings).toFixed(2)
-              : "0.00";
+            // Transport_Log에서 Assigned == 1인 truck_id 가져오기
+            await this.fetchAssignedVehicle(
+              driverInfo.user_id,
+              driverInfo.truck_id,
+            );
           } else {
             console.error("Failed to fetch driver info:", data.message);
           }
@@ -127,6 +132,56 @@ export default {
         }
       } catch (error) {
         console.error("An error occurred while fetching driver info:", error);
+      }
+    },
+    async fetchAssignedVehicle(userId) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:8080/api/transport_logs/all`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("API Response Data:", data); // 전체 데이터 출력
+
+          if (data.success) {
+            // userId와 Assigned가 1인 데이터를 찾음
+            const assignedLog = data.data.find(
+              (log) => log.Driver_ID === userId && log.Assigned === 1,
+            );
+
+            console.log("Assigned Log:", assignedLog); // 필터링된 로그 출력
+
+            // Truck_ID 값 설정
+            if (assignedLog && assignedLog.Truck_ID) {
+              this.driver.vehicle = `${assignedLog.Truck_ID}`;
+            } else {
+              this.driver.vehicle = "Not assigned";
+            }
+          } else {
+            console.error("Failed to fetch transport logs:", data.message);
+            this.driver.vehicle = "Not assigned"; // 기본값 설정
+          }
+        } else {
+          console.error(
+            "Failed to fetch transport logs. Status:",
+            response.status,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "An error occurred while fetching assigned vehicle:",
+          error,
+        );
+        this.driver.vehicle = "Not assigned"; // 예외 발생 시 기본값 설정
       }
     },
     onImageChange(event) {

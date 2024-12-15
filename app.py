@@ -835,6 +835,15 @@ def get_site_status():
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
+@app.route('/api/transport_logs/all', methods=['GET'])
+def get_all_transport_logs():
+    try:
+        # Transport_Log 테이블의 모든 데이터를 가져옴
+        result = db.session.execute(text("SELECT * FROM Transport_Log"))
+        logs = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": logs})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
