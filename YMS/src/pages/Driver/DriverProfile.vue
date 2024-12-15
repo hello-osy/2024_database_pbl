@@ -112,7 +112,7 @@ export default {
                 ? `$${parseFloat(driverInfo.monthlyEarnings).toFixed(2)}`
                 : "$0.00",
               averageRatings: driverInfo.averageRatings
-                ? `parseFloat(driverInfo.averageRatings).toFixed(2)`
+                ? `$${parseFloat(driverInfo.averageRatings).toFixed(2)}`
                 : "0.00",
             };
 
