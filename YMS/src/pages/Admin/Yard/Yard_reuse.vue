@@ -30,42 +30,57 @@
         </div>
       </div>
   
-      <!-- Truck 또는 Trailer만 선택 가능한 Modal -->
-      <div v-if="selectedTruck && (selectedTruck.id.startsWith('T') || selectedTruck.id.startsWith('TL'))" class="modal">
+      <!-- Truck만 선택 가능한 Modal -->
+      <div v-if="selectedTruck && (selectedTruck.id.startsWith('T'))" class="modal">
         <div class="modal-content">
           <h3>
             Configure {{ selectedTruck.id.startsWith('TL') ? 'Trailer' : 'Truck' }} {{ selectedTruck.id }}
           </h3>
-  
+          
           <div v-if="selectedTruck && !selectedTruck.id.startsWith('TL')">
-            <label>Choose Chassis:</label>
-            <select v-model="selectedChassis">
-              <option v-for="chassis in chassisList" :key="chassis.id" :value="chassis">
-                {{ chassis.id }}
-              </option>
-            </select>
+          
+          <div class="modal-grid">
+          <!-- Left Column -->
+            <div class="modal-column">
+              <label>Choose Chassis:</label>
+              <select v-model="selectedChassis">
+                <option v-for="chassis in chassisList" :key="chassis.id" :value="chassis">
+                  {{ chassis.id }}
+                </option>
+              </select>
+
+              <label>Choose Container:</label>
+              <select v-model="selectedContainer">
+                <option v-for="container in containerList" :key="container.id" :value="container">
+                  {{ container.id }}
+                </option>
+              </select>
+
+              <label>Choose Trailer:</label>
+              <select v-model="selectedTrailer">
+                <option v-for="trailer in trailerList" :key="trailer.id" :value="trailer">
+                  {{ trailer.id }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Right Column -->
+            <div class="modal-column">
+              <label>Arrival Date:</label>
+              <input v-model="arriveDate" type="date" placeholder="Select arrival date" />
+
+              <label>Arrive Zone:</label>
+              <input v-model="arriveZone" placeholder="Enter arrival zone" />
+
+              <label>Assign Driver:</label>
+              <select v-model="selectedDriver">
+                <option v-for="driver in drivers" :key="driver.User_ID" :value="driver">
+                  {{ driver.User_ID }}
+                </option>
+              </select>
+            </div>
           </div>
-  
-          <label>Choose Container:</label>
-          <select v-model="selectedContainer">
-            <option v-for="container in containerList" :key="container.id" :value="container">
-              {{ container.id }}
-            </option>
-          </select>
-  
-          <label>Depart Zone:</label>
-          <input v-model="departZone" placeholder="Enter departure zone" />
-  
-          <label>Arrive Zone:</label>
-          <input v-model="arriveZone" placeholder="Enter arrival zone" />
-  
-          <label>Assign Driver:</label>
-          <select v-model="selectedDriver">
-            <option v-for="driver in drivers" :key="driver.User_ID" :value="driver">
-              {{ driver.User_ID }}
-            </option>
-          </select>
-  
+
           <button @click="confirmSelection">Confirm</button>
           <button @click="cancelSelection">Cancel</button>
         </div>
@@ -79,33 +94,19 @@
 
   export default {
     data() {
-      // const generateTrucks = (prefix, count, status) => {
-      //   return Array.from({ length: count }, (_, i) => ({
-      //     id: `${prefix}_${String(i + 1).padStart(3, "0")}`,
-      //     status: status,
-      //   }));
-      // };
-  
       return {
         searchQuery: "",
         selectedTruck: null,
         selectedChassis: null,
         selectedContainer: null,
+        selectedTrailer: null, // 추가된 데이터
         departZone: "",
         arriveZone: "",
+        arriveDate: "", // 추가된 데이터
         selectedDriver: null,
         statsCards: [],
-        siteStatus: [
-          // { name: "Truck Site", trucks: generateTrucks("T", 40, "in-dock") },
-          // { name: "Chassis Site", trucks: generateTrucks("C", 30, "in-parking") },
-          // { name: "Container Site", trucks: generateTrucks("CT", 30, "in-dock") },
-          // { name: "Trailer Site", trucks: generateTrucks("TL", 10, "in-parking") },
-        ],
-        drivers: [
-          // { User_ID: "D001", Current_Location: "Zone A", Current_Status: "Active" },
-          // { User_ID: "D002", Current_Location: "Zone B", Current_Status: "Inactive" },
-          // { User_ID: "D003", Current_Location: "Zone C", Current_Status: "On Break" },
-        ],
+        siteStatus: [],
+        drivers: [],
       };
     },
     computed: {
@@ -128,6 +129,9 @@
       },
       containerList() {
         return this.siteStatus.find((site) => site.name === "Container Site").trucks;
+      },
+      trailerList() {
+        return this.siteStatus.find((site) => site.name === "Trailer Site").trucks;
       },
     },
     methods: {
@@ -226,7 +230,7 @@
           this.selectedChassis = null;
           this.selectedContainer = null;
         } else {
-          alert("Only Trucks and Trailers can be configured.");
+          alert("Only Truck can be configured.");
         }
       },
       isAssigned(equipment) {
@@ -234,7 +238,43 @@
           (assigned) => assigned.id === equipment.id
         );
       },
+
+
       confirmSelection() {
+        // 검증 로직
+        if (!this.selectedTruck) {
+          alert("Please select a truck.");
+          return;
+        }
+        if (!this.selectedChassis && !this.selectedTrailer) {
+          alert("Please select chassis or trailer for the truck.");
+          return;
+        }
+        if ((this.selectedChassis && !this.selectedContainer) && !this.selectedTrailer) {
+          alert("Please select a container.");
+          return;
+        }
+        if (this.selectedChassis && this.selectedContainer && this.selectedTrailer){
+          alert("Can't Choose Chassis and Trailer both")
+          this.selectedChassis = null;
+          this.selectedContainer = null;
+          this.selectedTrailer = null;
+          return;
+        }
+        if (!this.arriveDate){
+          alert("Pleas select a arrival date");
+          return;
+        }
+        if (!this.arriveZone.trim()) {
+          alert("Please enter an arrival zone.");
+          return;
+        }
+        if (!this.selectedDriver) {
+          alert("Please assign a driver.");
+          return;
+        }
+
+        // 입력값이 모두 유효한 경우
         const newAssignments = [this.selectedTruck, this.selectedChassis, this.selectedContainer]
           .filter(Boolean)
           .map((equipment) => ({
@@ -245,14 +285,17 @@
               driver: this.selectedDriver?.User_ID || "Unassigned",
             },
           }));
-  
+
         // Vuex에 데이터 추가
         newAssignments.forEach((equipment) => {
           this.addEquipment(equipment);
         });
-  
+
+        // 입력값 초기화
         this.resetSelection();
       },
+
+
       cancelSelection() {
         this.resetSelection();
       },
@@ -260,6 +303,8 @@
         this.selectedTruck = null;
         this.selectedChassis = null;
         this.selectedContainer = null;
+        this.selectedTrailer =  null;
+        this.arriveDate = null;
         this.departZone = "";
         this.arriveZone = "";
         this.selectedDriver = null;
@@ -389,7 +434,7 @@
 .Available {
   background-color: #28a745;
 }
-.In-Use{
+.Reserved{
   border: 2px solid #ffa726;
   box-shadow: 0 0 8px #ffa726;
 }
@@ -412,7 +457,7 @@
   background: #fff;
   padding: 20px 30px;
   border-radius: 15px;
-  width: 400px;
+  width: 60%;
   max-width: 90%;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   text-align: center;
@@ -468,18 +513,32 @@
 .modal-content button:last-child:hover {
   background-color: #c82333;
 }
+
+.modal-grid {
+  display: flex;
+  gap: 20px;
+}
+
+.modal-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-column label {
+  margin-top: 10px;
+}
+
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-buttons button {
+  flex: 1;
+  margin: 0 10px;
+}
+
 </style>
-<!-- =======
-  <Yard :yardId="'HOU_YARD_0001'" />
-</template>
 
-<script>
-import Yard from "@/pages/Admin/Yard/Yard.vue";
-
-export default {
-  components: {
-    Yard,
-  },
-};
-</script>
->>>>>>> develop -->
