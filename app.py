@@ -359,11 +359,14 @@ def get_transport_logs():
                 Driver_ID AS driver,
                 Truck_ID AS vehicle,
                 CASE 
-                    WHEN CURDATE() BETWEEN Depart_Date AND Arrive_Date THEN 'In Progress'
-                    WHEN CURDATE() > Arrive_Date THEN 'Completed'
-                    ELSE 'Scheduled'
+                    WHEN Assigned = 0 THEN 'Reserved'
+                    WHEN Assigned = 1 THEN 'Delivering'
+                    WHEN Assigned = -1 THEN 'Rejected'
+                    WHEN Assigned = 2 THEN 'Completed'
+                    ELSE 'Unknown'
                 END AS status,
-                Depart_Date AS date,
+                Depart_Date AS departDate,
+                Arrive_Date AS arriveDate,
                 Log_Memo AS memo,
                 Depart_Zone_ID AS departZone,
                 Arrive_Zone_ID AS arriveZone                                                  
@@ -373,6 +376,7 @@ def get_transport_logs():
         return jsonify({"success": True, "data": logs})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 # Driver 데이터 반환 API
