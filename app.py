@@ -5,7 +5,9 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
 from flask_cors import CORS
 import jwt
-import datetime
+# import datetime
+from datetime import datetime
+
 
 # 비밀 키
 SECRET_KEY = 'your_secret_key'
@@ -834,6 +836,81 @@ def get_site_status():
 
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+
+
+
+@app.route('/api/transport-log', methods=['POST'])
+def register_transport_log():
+    data = request.json
+
+    # 필수 필드 검증
+    required_fields = ["truck", "arriveDate", "arriveZone", "driver"]
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"success": False, "message": f"Missing required field: {field}"}), 400
+
+    # 날짜 형식 검증
+    try:
+        arrive_date = datetime.strptime(data["arriveDate"], "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid date format. Expected YYYY-MM-DD."}), 400
+
+    # 트레일러와 샤시/컨테이너 중 하나만 있어야 함
+    if data.get("trailer") and (data.get("chassis") or data.get("container")):
+        return jsonify({"success": False, "message": "Cannot have both trailer and chassis/container."}), 400
+
+    # 기본값 설정 (없을 경우 NULL로 처리)
+    truck_id = data.get("truck")
+    driver_id = data.get("driver")
+    chassis_id = data.get("chassis")
+    container_id = data.get("container")
+    trailer_id = data.get("trailer")
+    depart_zone_id = data.get("departZone") or None
+    depart_date = data.get("departDate") or None
+    arrive_zone_id = data.get("arriveZone")
+    arrive_date = data.get("arriveDate")
+    log_memo = data.get("logMemo") or None
+    assigned = 0
+
+    try:
+        # 데이터 삽입 쿼리
+        query = """
+        INSERT INTO Transport_Log (
+            Driver_ID, Container_ID, Chassis_ID, Truck_ID, Trailer_ID,
+            Depart_Zone_ID, Depart_Date, Arrive_Zone_ID, Arrive_Date,
+            Assigned, Log_Memo
+        )
+        VALUES (
+            :driver_id, :container_id, :chassis_id, :truck_id, :trailer_id,
+            :depart_zone_id, :depart_date, :arrive_zone_id, :arrive_date,
+            :assigned, :log_memo
+        )
+        """
+        db.session.execute(
+            text(query),
+            {
+                "driver_id": driver_id,
+                "container_id": container_id,
+                "chassis_id": chassis_id,
+                "truck_id": truck_id,
+                "trailer_id": trailer_id,
+                "depart_zone_id": depart_zone_id,
+                "depart_date": depart_date,
+                "arrive_zone_id": arrive_zone_id,
+                "arrive_date": arrive_date,
+                "assigned": assigned,
+                "log_memo": log_memo,
+            },
+        )
+        db.session.commit()
+        return jsonify({"success": True, "message": "Transport log registered successfully!"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "Failed to register transport log", "error": str(e)}), 500
+
+
 
 
 # Flask 애플리케이션 실행

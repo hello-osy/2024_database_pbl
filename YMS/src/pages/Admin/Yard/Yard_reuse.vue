@@ -219,7 +219,32 @@
           console.error("Error fetching site status:", error.message);
         }
       },
+      
+      async submitToServer() {
+        const payload = {
+          truck: this.selectedTruck,
+          chassis: this.selectedChassis,
+          container: this.selectedContainer,
+          trailer: this.selectedTrailer,
+          arriveDate: this.arriveDate,
+          arriveZone: this.arriveZone,
+          driver: this.selectedDriver?.User_ID,
+        };
 
+        try {
+          const response = await axios.post("http://localhost:8080/api/transport-log", payload);
+
+          if (response.data.success) {
+            alert("Transport log successfully registered!");
+            this.resetSelection(); // 선택값 초기화
+          } else {
+            alert(`Error: ${response.data.message}`);
+          }
+        } catch (error) {
+          console.error("Server error:", error);
+          alert("An error occurred while registering the transport log.");
+        }
+      },
 
 
       ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
@@ -290,6 +315,8 @@
         newAssignments.forEach((equipment) => {
           this.addEquipment(equipment);
         });
+        
+        this.submitToServer();
 
         // 입력값 초기화
         this.resetSelection();
