@@ -218,8 +218,9 @@ docker-compose up -b --build
 #### dbp_mysql_server 접속
 
 ```bash
-docker exec -it dbp_mysql_server mysql -u root -p		# root 계정 접속
-docker exec -it dbp_mysql_server mysql -u user -p		# user 계정 접속
+docker exec -it dbp_mysql_server mysql -u root -p		                # root 계정 접속
+docker exec -it dbp_mysql_server mysql -u user -p		                # user 계정 접속
+docker exec -it dbp_mysql_server mysql -u user -puser_password YMS_db   # user 계정으로 바로 접속, YMS_db 사용
 ```
 
 root password : roow_password

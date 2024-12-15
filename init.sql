@@ -70,7 +70,7 @@ CREATE TABLE Zone (
 CREATE TABLE Truck (
     Truck_ID VARCHAR(10) NOT NULL,
     Status VARCHAR(20) NULL,
-    Zone_ID VARCHAR(30) NOT NULL,
+    Zone_ID VARCHAR(30) NULL,
     PRIMARY KEY (Truck_ID),
     FOREIGN KEY (Zone_ID) REFERENCES Zone(Zone_ID)
 );
@@ -80,8 +80,8 @@ CREATE TABLE Chassis (
     Chassis_ID VARCHAR(10) NOT NULL,
     Status VARCHAR(20) NULL,
     Type VARCHAR(20) NULL,
-    Truck_ID VARCHAR(10) NOT NULL,
-    Zone_ID VARCHAR(30) NOT NULL,
+    Truck_ID VARCHAR(10) NULL,
+    Zone_ID VARCHAR(30) NULL,
     PRIMARY KEY (Chassis_ID),
     FOREIGN KEY (Truck_ID) REFERENCES Truck(Truck_ID),
     FOREIGN KEY (Zone_ID) REFERENCES Zone(Zone_ID)
@@ -94,7 +94,7 @@ CREATE TABLE Container (
     Chassis_ID VARCHAR(10) NOT NULL,
     Type VARCHAR(255) NULL,
     Size VARCHAR(255) NULL,
-    Zone_ID VARCHAR(30) NOT NULL,
+    Zone_ID VARCHAR(30) NULL,
     PRIMARY KEY (Container_ID),
     FOREIGN KEY (Chassis_ID) REFERENCES Chassis(Chassis_ID),
     FOREIGN KEY (Zone_ID) REFERENCES Zone(Zone_ID)
@@ -105,8 +105,8 @@ CREATE TABLE Trailer (
     Trailer_ID VARCHAR(10) NOT NULL,
     Status VARCHAR(20) NULL,
     Type VARCHAR(20) NULL,
-    Zone_ID VARCHAR(30) NOT NULL,
-    Truck_ID VARCHAR(10) NOT NULL,
+    Zone_ID VARCHAR(30) NULL,
+    Truck_ID VARCHAR(10) NULL,
     PRIMARY KEY (Trailer_ID),
     FOREIGN KEY (Zone_ID) REFERENCES Zone(Zone_ID),
     FOREIGN KEY (Truck_ID) REFERENCES Truck(Truck_ID)
@@ -128,7 +128,7 @@ CREATE TABLE Driver (
     Current_Location VARCHAR(20) DEFAULT NULL,
     Current_Status VARCHAR(20) DEFAULT NULL,
     Private_Truck_Info VARCHAR(20) DEFAULT NULL,
-    Truck_ID VARCHAR(10) DEFAULT 'T_0001',
+    Truck_ID VARCHAR(10) DEFAULT NULL,
     Trips_Completed INT DEFAULT 0,
     Monthly_Earnings DECIMAL(10, 2) DEFAULT 0.00,
     Average_Ratings DECIMAL(3, 2) DEFAULT 0.00,
@@ -388,7 +388,7 @@ SELECT
     2 AS Role_ID, -- Role_ID 2는 Driver를 의미한다고 가정
     CONCAT('123-456-78', LPAD(t.num, 2, '0')) AS Phone_Number
 FROM (
-    SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
+    SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14 UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18 UNION SELECT 19 UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23 UNION SELECT 24 UNION SELECT 25 UNION SELECT 26
 ) t;
 -- User 테이블에 Manager 관련 데이터 삽입
 INSERT INTO User (User_ID, UserName, Email, Role_ID, Phone_Number)
@@ -405,9 +405,9 @@ FROM (
 -- Truck 데이터 삽입
 INSERT INTO Truck (Truck_ID, Status, Zone_ID)
 SELECT 
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID,
-    CASE WHEN t.num % 2 = 0 THEN 'Available' ELSE 'In Use' END AS Status,
-    CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID
+    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID, -- Truck_ID 생성
+    'Available' AS Status, -- 모든 Status를 Available로 설정
+    CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID -- Zone_ID는 그대로 유지
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
     UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12
@@ -416,11 +416,12 @@ FROM (
     UNION SELECT 25 UNION SELECT 26 UNION SELECT 27 UNION SELECT 28 UNION SELECT 29 UNION SELECT 30
 ) t;
 
+
 -- Chassis 데이터 삽입
 INSERT INTO Chassis (Chassis_ID, Status, Type, Truck_ID, Zone_ID)
 SELECT 
     CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
-    CASE WHEN t.num % 2 = 0 THEN 'Available' ELSE 'In Use' END AS Status,
+    'Available' AS Status,
     CASE 
         WHEN t.num % 3 = 0 THEN 'Regular'
         WHEN t.num % 3 = 1 THEN 'Light'
@@ -448,7 +449,7 @@ FROM (
 INSERT INTO Container (Container_ID, Status, Chassis_ID, Type, Size, Zone_ID)
 SELECT 
     CONCAT('CT_', LPAD(t.num, 4, '0')) AS Container_ID,
-    CASE WHEN t.num % 2 = 0 THEN 'Available' ELSE 'In Use' END AS Status,
+    'Available' AS Status,
     CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
     CASE 
         WHEN t.num % 4 = 0 THEN 'Dry'
@@ -477,10 +478,10 @@ FROM (
 INSERT INTO Trailer (Trailer_ID, Status, Type, Zone_ID, Truck_ID)
 SELECT 
     CONCAT('TL_', LPAD(t.num, 4, '0')) AS Trailer_ID,
-    CASE WHEN t.num % 2 = 0 THEN 'Available' ELSE 'In Use' END AS Status,
+    'Available' AS Status,
     CASE WHEN t.num % 2 = 0 THEN '48\'' ELSE '53\'' END AS Type,
     CONCAT('TL_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID,
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID
+    NULL AS Truck_ID
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
     UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12
@@ -501,13 +502,13 @@ SELECT
         ELSE 'MOB'
     END AS Current_Location,
     CASE WHEN t.num % 2 = 0 THEN 'In Use' ELSE 'Available' END AS Current_Status,
-    CASE WHEN t.num % 3 = 0 THEN 'yes' ELSE 'no' END AS Private_Truck_Info,
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID,
+    NULL AS Private_Truck_Info,
+    NULL AS Truck_ID,
     t.num * 10 AS Trips_Completed, -- 완료된 운송 횟수
     t.num * 1000.50 AS Monthly_Earnings, -- 월 수익
     ROUND(3 + (t.num % 5) * 0.4, 2) AS Average_Ratings -- 평균 평점
 FROM (
-    SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
+    SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14 UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18 UNION SELECT 19 UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23 UNION SELECT 24 UNION SELECT 25 UNION SELECT 26
 ) t;
 
 -- Manager 테이블에 데이터 삽입
@@ -580,15 +581,38 @@ WHERE CONCAT('T_', LPAD(MOD(t.num - 1, 6) + 1, 4, '0')) IN (
     SELECT Truck_ID FROM Truck -- Truck 테이블의 Truck_ID를 참조
 );
 
-
-UPDATE Truck
-SET Zone_ID = NULL
-WHERE Status = 'In Use';
-
+-- 미사용 Truck -> Zone 등록
 UPDATE Zone
 SET Status = 'In Use'
 WHERE Zone_ID IN (
     SELECT Zone_ID
     FROM Truck
+    WHERE Status = 'Available' AND Zone_ID IS NOT NULL
+);
+
+-- 미사용 Chassis -> Zone 등록
+UPDATE Zone
+SET Status = 'In Use'
+WHERE Zone_ID IN (
+    SELECT Zone_ID
+    FROM Chassis
+    WHERE Status = 'Available' AND Zone_ID IS NOT NULL
+);
+
+-- 미사용 Container -> Zone 등록
+UPDATE Zone
+SET Status = 'In Use'
+WHERE Zone_ID IN (
+    SELECT Zone_ID
+    FROM Container
+    WHERE Status = 'Available' AND Zone_ID IS NOT NULL
+);
+
+-- 미사용 Trailer -> Zone 등록
+UPDATE Zone
+SET Status = 'In Use'
+WHERE Zone_ID IN (
+    SELECT Zone_ID
+    FROM Trailer
     WHERE Status = 'Available' AND Zone_ID IS NOT NULL
 );
