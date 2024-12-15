@@ -12,6 +12,7 @@ import DashBoard from "@/pages/Admin/DashBoard.vue";
 import DriverList from "@/pages/Admin/DriverList.vue";
 import TransportLog from "@/pages/Admin/TransportLog.vue";
 import AssignedManagement from "@/pages/Admin/AssignedManagement.vue";
+import YardVisualization from "../pages/Admin/YardVisualization.vue";
 import Yard1 from "@/pages/Admin/Yard/Yard1.vue";
 import Yard2 from "@/pages/Admin/Yard/Yard2.vue";
 import Yard3 from "@/pages/Admin/Yard/Yard3.vue";
@@ -49,6 +50,11 @@ const routes = [
         path: "dashboard",
         name: "Dashboard",
         component: DashBoard,
+      },
+      {
+        path: "yard-visualization",
+        name: "YardVisualization",
+        component: YardVisualization,
       },
       {
         path: "yard1",
