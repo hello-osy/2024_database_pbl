@@ -35,7 +35,7 @@
             <button @click="declineTrip(trip.id)">Decline</button>
           </div>
           <div v-else-if="trip.assigned === 1" class="action-buttons">
-            <button @click="markCompleted(trip.id)">Mark as Completed</button>
+            <button @click="openMemoPopup(trip.id)">Mark as Completed</button>
           </div>
           <div v-else-if="trip.assigned === 2" class="action-buttons">
             <button disabled>Completed</button>
@@ -46,6 +46,20 @@
       <!-- No Trips Message -->
       <div v-else class="no-trips">
         <p>No trips to show.</p>
+      </div>
+      <!-- Log Memo Popup -->
+      <div v-if="showPopup" class="popup-overlay">
+        <div class="popup">
+          <h3>Log Memo</h3>
+          <textarea
+            v-model="logMemo"
+            placeholder="Enter memo here..."
+          ></textarea>
+          <div class="popup-actions">
+            <button @click="submitMemo">Submit</button>
+            <button @click="closePopup">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -58,6 +72,9 @@ export default {
       filterStatus: "all", // Default filter
       trips: [],
       assigningTrip: false, // 현재 할당 중인지 추적
+      showPopup: false, // 팝업 상태
+      logMemo: "", // 작성된 메모
+      currentTripId: null, // 현재 작업 중인 trip ID
     };
   },
   computed: {
@@ -113,12 +130,44 @@ export default {
         console.error("An error occurred while fetching trips:", error);
       }
     },
-    async markCompleted(logId) {
+    openMemoPopup(tripId) {
+      this.showPopup = true;
+      this.currentTripId = tripId;
+      const trip = this.trips.find((t) => t.id === tripId);
+      this.logMemo = trip?.logMemo || ""; // 기존 메모 로드
+    },
+    closePopup() {
+      this.showPopup = false;
+      this.currentTripId = null;
+      this.logMemo = "";
+    },
+    async submitMemo() {
       try {
-        await this.updateTripStatus(logId, 1, true); // 서버에서 상태 업데이트
-        await this.fetchTrips(); // 최신 데이터 가져오기
+        if (!this.logMemo.trim()) {
+          alert("Memo cannot be empty.");
+          return;
+        }
+        const response = await this.updateTripLogMemo(
+          this.currentTripId,
+          this.logMemo,
+          2,
+        );
+        if (response.success) {
+          const tripIndex = this.trips.findIndex(
+            (trip) => trip.id === this.currentTripId,
+          );
+          if (tripIndex !== -1) {
+            this.trips[tripIndex].assigned = 2; // assigned 값을 변경
+            this.trips[tripIndex].logMemo = this.logMemo; // 메모 업데이트
+          }
+          alert("Memo updated and trip marked as completed.");
+          this.closePopup();
+        } else {
+          alert("Failed to update memo: " + response.message);
+        }
       } catch (error) {
-        console.error(`Failed to mark trip ${logId} as completed:`, error);
+        alert("An error occurred while updating memo.");
+        console.error("Error in submitMemo:", error);
       }
     },
     async handleAccept(logId) {
@@ -169,20 +218,12 @@ export default {
         console.error(`Failed to decline trip ${logId}:`, error);
       }
     },
-    showInProgressAlert() {
+    showInProgressAlert(logId, assigned, memo = "") {
       alert(
         "You already have an assigned trip in progress. You cannot accept a new trip until the current one is completed.",
       );
     },
     async updateTripStatus(logId, assigned, completed = false) {
-      console.log(
-        "Update 요청 시작됨. Log ID:",
-        logId,
-        "Assigned:",
-        assigned,
-        "Completed:",
-        completed,
-      );
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
@@ -204,6 +245,37 @@ export default {
       } catch (error) {
         console.error("Error updating trip status:", error);
         throw error; // 에러를 호출부로 전달
+      }
+    },
+    async updateTripLogMemo(logId, logMemo, assigned) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:8080/api/transport_logs/update_memo`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              log_id: logId,
+              log_memo: logMemo,
+              assigned: assigned,
+            }),
+          },
+        );
+
+        const result = await response.json();
+        console.log("API response:", result);
+
+        if (!response.ok) {
+          throw new Error(result.message || "Failed to update log memo");
+        }
+        return result;
+      } catch (error) {
+        console.error("Error updating trip log memo:", error);
+        throw error;
       }
     },
   },
@@ -347,6 +419,12 @@ button.decline-button:hover {
   background-color: #e53935;
 }
 
+/* Disabled Button */
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 /* Completed and Cancelled Status Labels */
 .status-label {
   font-weight: bold;
@@ -363,5 +441,53 @@ button.decline-button:hover {
 
 .status-label.cancelled {
   background-color: #f44336;
+}
+
+/* Popup Styles */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.popup textarea {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.popup textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.popup-actions button {
+  flex: 1;
 }
 </style>

@@ -950,7 +950,27 @@ def register_transport_log():
         return jsonify({"success": False, "message": "Failed to register transport log", "error": str(e)}), 500
 
 
+@app.route('/api/transport_logs/update_memo', methods=['POST'])
+def update_transport_log_memo():
+    try:
+        # 요청에서 데이터 추출
+        data = request.json
+        log_id = data.get("log_id")
+        log_memo = data.get("log_memo")
+        assigned = data.get('assigned', 2)
 
+        # 데이터베이스 업데이트
+        query = text("""
+            UPDATE Transport_Log
+            SET Log_Memo = :log_memo, Assigned = :assigned
+            WHERE Log_ID = :log_id
+        """)
+        db.session.execute(query, {'log_memo': log_memo, 'assigned': assigned, 'log_id': log_id})
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Log memo updated successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
