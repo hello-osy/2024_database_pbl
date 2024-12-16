@@ -170,19 +170,19 @@ p {
 }
 
 .log-table .Rejected {
-  color: #ff0000ce;
+  color: #e63946;
 }
 
 .log-table .Completed {
-  color: #28a745;
+  color: #2a9d8f;
 }
 
 .log-table .Delivering {
-  color: #ffc107;
+  color: #f4a261;
 }
 
 .log-table .Reserved {
-  color: #007bff;
+  color: #457b9d;
 }
 
 .memo-cell {
