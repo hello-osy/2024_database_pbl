@@ -421,6 +421,96 @@ def get_yard(yard_id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+# LA Division 데이터 API
+@app.route('/api/yard/la', methods=['GET'])
+def get_la_yards():
+    try:
+        result = db.session.execute(text("""
+            SELECT
+                Yard_ID AS id,
+                Yard_Name AS name,
+                Division_ID AS division_id,
+                Address_ID AS address_id
+            FROM Yard
+            WHERE Division_ID = 'LA'
+        """))
+        yards = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": yards})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+        
+# PHX Division 데이터 API
+@app.route('/api/yard/phx', methods=['GET'])
+def get_phx_yards():
+    try:
+        result = db.session.execute(text("""
+            SELECT
+                Yard_ID AS id,
+                Yard_Name AS name,
+                Division_ID AS division_id,
+                Address_ID AS address_id
+            FROM Yard
+            WHERE Division_ID = 'PHX'
+        """))
+        yards = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": yards})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# HOU Division 데이터 API
+@app.route('/api/yard/hou', methods=['GET'])
+def get_hou_yards():
+    try:
+        result = db.session.execute(text("""
+            SELECT
+                Yard_ID AS id,
+                Yard_Name AS name,
+                Division_ID AS division_id,
+                Address_ID AS address_id
+            FROM Yard
+            WHERE Division_ID = 'HOU'
+        """))
+        yards = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": yards})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# MOB Division 데이터 API
+@app.route('/api/yard/mob', methods=['GET'])
+def get_mob_yards():
+    try:
+        result = db.session.execute(text("""
+            SELECT
+                Yard_ID AS id,
+                Yard_Name AS name,
+                Division_ID AS division_id,
+                Address_ID AS address_id
+            FROM Yard
+            WHERE Division_ID = 'MOB'
+        """))
+        yards = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": yards})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    
+# SAV Division 데이터 API
+@app.route('/api/yard/sav', methods=['GET'])
+def get_sav_yards():
+    try:
+        result = db.session.execute(text("""
+            SELECT
+                Yard_ID AS id,
+                Yard_Name AS name,
+                Division_ID AS division_id,
+                Address_ID AS address_id
+            FROM Yard
+            WHERE Division_ID = 'SAV'
+        """))
+        yards = [dict(row._mapping) for row in result]
+        return jsonify({"success": True, "data": yards})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    
 # 모든 Yard 데이터 반환 API
 @app.route('/api/yard/all', methods=['GET'])
 def get_all_yards():
