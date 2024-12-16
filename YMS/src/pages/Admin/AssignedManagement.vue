@@ -10,6 +10,7 @@
           <th>Driver ID</th>
           <th>Depart Date</th>
           <th>Arrive Date</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -18,24 +19,16 @@
           <td>{{ log.depart_zone }}</td>
           <td>{{ log.arrive_zone }}</td>
           <td>{{ log.driver_id }}</td>
-          <td>{{ log.depart_date }}</td>
-          <td>{{ log.arrive_date }}</td>
+          <td>{{ log.depart_date || 'N/A' }}</td>
+          <td>{{ log.arrive_date || 'N/A' }}</td>
+          <td>
+            <button @click="releaseLog(log.id)">Release</button>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
 </template>
-
-<!-- <script>
-import { mapGetters } from "vuex";
-
-export default {
-  computed: {
-    ...mapGetters(["assignedEquipments"]), // Vuex에서 데이터를 가져옴
-  },
-};
-</script> -->
-
 
 <script>
 import axios from "axios";
@@ -44,35 +37,65 @@ export default {
   name: "AssignedManagement",
   data() {
     return {
-      transportLogs: [], // API에서 가져올 데이터를 저장
+      transportLogs: [], // 할당된 장비 로그
     };
   },
   methods: {
     async fetchTransportLogs() {
       try {
-        const response = await axios.get("http://localhost:8080/api/transport_logs/assigned");
-        if (response.data.success) {
-          this.transportLogs = response.data.data;
+        const { data } = await axios.get("http://localhost:8080/api/transport_logs/assigned");
+        if (data.success) {
+          this.transportLogs = data.data.map(log => ({
+            id: log.id,
+            depart_zone: log.depart_zone || "N/A",
+            arrive_zone: log.arrive_zone || "N/A",
+            driver_id: log.driver_id || "Unassigned",
+            depart_date: log.depart_date || "N/A",
+            arrive_date: log.arrive_date || "N/A",
+          }));
         } else {
-          console.error("데이터 가져오기 실패:", response.data.message);
+          console.error("Failed to fetch data:", data.message);
         }
       } catch (error) {
-        console.error("에러 발생:", error.message);
+        console.error("Error fetching transport logs:", error.message);
+      }
+    },
+
+    async releaseLog(logId) {
+      try {
+        console.log(`Releasing log ID: ${logId}`);
+
+        // 1. 운송 로그 할당 해제
+        const releaseResponse = await axios.post(
+          `http://localhost:8080/api/transport_logs/release/${logId}`
+        );
+
+        if (releaseResponse.data.success) {
+          // 2. 해당 로그 제거
+          this.transportLogs = this.transportLogs.filter(log => log.id !== logId);
+          alert("Log released successfully and equipment status updated.");
+        } else {
+          console.error("Failed to release log:", releaseResponse.data.message);
+        }
+      } catch (error) {
+        console.error("Error during release:", error.response?.data || error.message);
       }
     },
   },
   mounted() {
-    // 컴포넌트가 로드될 때 API 호출
-    this.fetchTransportLogs();
+    this.fetchTransportLogs(); // 페이지 로드시 로그 데이터 가져오기
   },
 };
 </script>
 
-
-
 <style scoped>
 .assigned-management {
   padding: 20px;
+}
+
+h2 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
 }
 
 table {
@@ -81,18 +104,28 @@ table {
   margin-top: 20px;
 }
 
-th,
-td {
+table th,
+table td {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
 }
 
-th {
+table th {
   background-color: #f4f4f4;
 }
 
-h2 {
-  margin-bottom: 20px;
+button {
+  padding: 5px 10px;
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #ff5252;
 }
 </style>
