@@ -1311,7 +1311,7 @@ def delete_equipment():
         # 요청 데이터 받기
         data = request.get_json()
         equipment_id = data.get("id")
-        equipment_type = data.get("type").lower()[:-5]  # truck, chassis, container, trailer
+        equipment_type = data.get("type").lower()  # truck, chassis, container, trailer
 
         if not all([equipment_id, equipment_type]):
             return jsonify({"success": False, "message": "Missing required fields"}), 400
@@ -1328,7 +1328,7 @@ def delete_equipment():
             return jsonify({"success": False, "message": f"Invalid equipment type: {equipment_type}"}), 400
 
 
-        # Zone Status 변경경
+        # Zone Status 변경
         query = f"""
             UPDATE Zone
             SET Status='Available'
@@ -1343,22 +1343,29 @@ def delete_equipment():
         )
         db.session.commit()
 
-        # 데이터베이스에서 해당 장비 삭제
-        query = f"""
-        INSERT INTO {table_mapping[equipment_type]}_Archive SELECT * FROM {table_mapping[equipment_type]} WHERE {table_mapping[equipment_type]}_ID=:equipment_id;
-        DELETE FROM {table_mapping[equipment_type]} WHERE {table_mapping[equipment_type]}_ID=:equipment_id;
-        """
-
+        # 기존 코드
         # DELETE FROM {table_mapping[equipment_type]}
         # WHERE {table_mapping[equipment_type]}_ID = :equipment_id
 
+
+        # 데이터베이스에서 해당 장비 아카이브 백업
+        query = f"""
+        INSERT INTO {table_mapping[equipment_type]}_Archive SELECT * FROM {table_mapping[equipment_type]} WHERE {table_mapping[equipment_type]}_ID=:equipment_id;
+        """
         db.session.execute(
             text(query),
             {"equipment_id": equipment_id},
         )
         db.session.commit()
         
-
+        # 장비 삭제
+        query = f"""        
+        DELETE FROM {table_mapping[equipment_type]} WHERE {table_mapping[equipment_type]}_ID=:equipment_id;
+        """
+        db.session.execute(
+            text(query),
+            {"equipment_id": equipment_id},
+        )
         db.session.commit()
         return jsonify({"success": True, "message": f"{equipment_type.capitalize()} deleted successfully!"}), 200
 

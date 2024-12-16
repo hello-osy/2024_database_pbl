@@ -37,13 +37,13 @@
     </div>
 
     <!-- Truck만 선택 가능한 Modal -->
-    <div v-if="selectedTruck && (selectedTruck.id.startsWith('T'))" class="modal">
-      <div class="modal-content">
+    <div v-if="selectedTruck" class="modal">
+      <div v-if="selectedTruck" class="modal-content">
         <h3>
-          Configure {{ selectedTruck.id.startsWith('TL') ? 'Trailer' : 'Truck' }} {{ selectedTruck.id }}
+          Configure Truck {{ selectedTruck.id }}
         </h3>
         
-        <div v-if="selectedTruck && !selectedTruck.id.startsWith('TL')">
+        <div v-if="selectedTruck">
         
           <div class="modal-grid">
           <!-- Left Column -->
@@ -153,7 +153,6 @@
 </template>
   
 <script>
-  import { mapActions } from "vuex";
   import axios from "axios";
 
   export default {
@@ -225,6 +224,9 @@
       },
     },
     methods: {
+      truckList(){
+        return this.siteStatus.find((site) => site.name === "Truck Site").trucks;
+      },
       getSvgPath(siteName) {
         const svgMapping = {
           "Truck Site": require("@/assets/svg/truck_04.svg"),
@@ -463,13 +465,17 @@
 
       // ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
       selectTruck(truck) {
-        // Truck(T) 또는 Trailer(TL)만 선택 가능
-        if (truck.id.startsWith("T") || truck.id.startsWith("TL")) {
+        const truckList = this.truckList(); // Truck Site의 트럭 리스트 가져오기
+        const isTruck = truckList.some((t) => t.id === truck.id); // 선택한 객체가 Truck에 있는지 확인
+        
+        if (isTruck) {
           this.selectedTruck = truck;
           this.selectedChassis = null;
           this.selectedContainer = null;
+          this.selectedTrailer = null;
+          console.log("Truck selected:", truck);
         } else {
-          alert("Only Truck can be configured.");
+          alert("This equipment is not registered in the Truck list.");
         }
       },
       isAssigned(equipment) {
