@@ -976,6 +976,437 @@ def update_transport_log_memo():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route('/api/transport_log/update_status', methods=['POST'])
+def update_transport_log_status():
+    try:
+        data = request.json
+        log_id = data.get("log_id")
+        action = data.get("action")
+
+        if not log_id or not action:
+            return jsonify({"success": False, "message": "Invalid input: log_id or action missing"}), 400
+        
+        debug_logs = []  # 디버깅 메시지 저장
+        debug_logs.append(f"Log ID: {log_id}, Action: {action}")
+
+        if not log_id or not action:
+            return jsonify({
+                "success": False,
+                "message": "Missing log_id or action",
+                "debug_logs": debug_logs
+            }), 400
+        
+        if action == "accept":
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET assigned = 1
+                WHERE Log_ID = :log_id
+            """), {"log_id": log_id})
+
+            debug_logs.append(f"Log {log_id} assigned to 1 (accepted).")
+
+            # Accept: Update Truck, Chassis, Container, Trailer to 'In Use'
+            # Update associated Zone to 'Available'
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'Available'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID FROM Truck
+                    WHERE Truck_ID IN (
+                        SELECT Truck_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+
+            db.session.execute(text("""
+                UPDATE Truck
+                SET Status = 'In Use', Zone_ID = NULL
+                WHERE Truck_ID IN (
+                    SELECT Truck_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Truck status set to 'In Use' and Zone_ID cleared for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'Available'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID FROM Chassis
+                    WHERE Chassis_ID IN (
+                        SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+
+            db.session.execute(text("""
+                UPDATE Chassis
+                SET Status = 'In Use', Zone_ID = NULL
+                WHERE Chassis_ID IN (
+                    SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Chassis status set to 'In Use' and Zone_ID cleared for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'Available'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID FROM Container
+                    WHERE Container_ID IN (
+                        SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+
+            db.session.execute(text("""
+                UPDATE Container
+                SET Status = 'In Use', Zone_ID = NULL
+                WHERE Container_ID IN (
+                    SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Container status set to 'In Use' and Zone_ID cleared for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'Available'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID FROM Trailer
+                    WHERE Trailer_ID IN (
+                        SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+
+            db.session.execute(text("""
+                UPDATE Trailer
+                SET Status = 'In Use', Zone_ID = NULL
+                WHERE Trailer_ID IN (
+                    SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Trailer status set to 'In Use' and Zone_ID cleared for Log_ID: {log_id}")
+
+        elif action == "decline":
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET assigned = -1
+                WHERE Log_ID = :log_id
+            """), {"log_id": log_id})
+            debug_logs.append(f"Log {log_id} updated to 'assigned=-1'")
+
+            # Reject: Update all equipment status to 'Available'
+            db.session.execute(text("""
+                UPDATE Truck
+                SET Status = 'Available'
+                WHERE Truck_ID IN (
+                    SELECT Truck_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Truck status set to 'Available' for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Chassis
+                SET Status = 'Available'
+                WHERE Chassis_ID IN (
+                    SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Chassis status set to 'Available' for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Container
+                SET Status = 'Available'
+                WHERE Container_ID IN (
+                    SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Container status set to 'Available' for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Trailer
+                SET Status = 'Available'
+                WHERE Trailer_ID IN (
+                    SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Trailer status set to 'Available' for Log_ID: {log_id}")
+
+        elif action == "completed":
+            # 이미 completed 상태인지 확인
+            current_status = db.session.execute(text("""
+                SELECT assigned FROM Transport_Log WHERE Log_ID = :log_id
+            """), {"log_id": log_id}).fetchone()
+
+            if current_status and current_status[0] == 2:
+                debug_logs.append(f"Log {log_id} is already in 'completed' state. Skipping update.")
+                return jsonify({"success": True, "message": "Log is already completed.", "debug_logs": debug_logs})
+
+            debug_logs.append("Starting 'completed' action")
+            db.session.execute(text("""
+                UPDATE Transport_Log
+                SET assigned = 2
+                WHERE Log_ID = :log_id
+            """), {"log_id": log_id})
+            debug_logs.append(f"Log {log_id} updated to 'assigned=2'")
+
+            # 장비와 연결된 관계를 모두 해제
+            db.session.execute(text("""
+                UPDATE Chassis
+                SET Truck_ID = NULL
+                WHERE Chassis_ID IN (
+                    SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Truck connections reset for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Container
+                SET Chassis_ID = NULL
+                WHERE Container_ID IN (
+                    SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Container connections reset for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Trailer
+                SET Truck_ID = NULL
+                WHERE Trailer_ID IN (
+                    SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Trailer connections reset for Log_ID: {log_id}")
+
+            # 모든 장비 상태를 Available로 변경
+            db.session.execute(text("""
+                UPDATE Truck
+                SET Status = 'Available'
+                WHERE Truck_ID IN (
+                    SELECT Truck_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Truck status set to 'Available' for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Chassis
+                SET Status = 'Available'
+                WHERE Chassis_ID IN (
+                    SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Chassis status set to 'Available' for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Container
+                SET Status = 'Available'
+                WHERE Container_ID IN (
+                    SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Container status set to 'Available' for Log_ID: {log_id}")
+
+            db.session.execute(text("""
+                UPDATE Trailer
+                SET Status = 'Available'
+                WHERE Trailer_ID IN (
+                    SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Trailer status set to 'Available' for Log_ID: {log_id}")
+
+            # 도착 Zone의 Site와 Yard 정보를 파악
+            intermediate_result = db.session.execute(text("""
+                SELECT Arrive_Zone_ID
+                FROM Transport_Log
+                WHERE Log_ID = :log_id
+            """), {"log_id": log_id}).fetchone()
+
+            debug_logs.append(f"Intermediate Arrive_Zone_ID: {intermediate_result}")
+
+            if not intermediate_result or not intermediate_result[0]:
+                raise ValueError("Arrive_Zone_ID is NULL or invalid for the given log_id.")
+
+            # 도착 Zone 확인
+            arrive_zone = db.session.execute(text("""
+                SELECT Arrive_Zone_ID
+                FROM Transport_Log
+                WHERE Log_ID = :log_id
+            """), {"log_id": log_id}).fetchone()
+
+            if not arrive_zone or not arrive_zone[0]:
+                raise ValueError(f"Arrive_Zone_ID not found for Log_ID: {log_id}")
+
+            arrive_zone_id = arrive_zone[0]
+            debug_logs.append(f"Arrive_Zone_ID resolved: {arrive_zone_id}")
+
+            # Yard_ID 가져오기
+            debug_logs.append(f"🔍 Fetching Yard_ID for Arrive_Zone_ID: {arrive_zone_id}")
+
+            yard_result = db.session.execute(text("""
+                SELECT y.Yard_ID
+                FROM Zone z
+                JOIN Site s ON z.Site_ID = s.Site_ID
+                JOIN Yard y ON s.Yard_ID = y.Yard_ID
+                WHERE z.Zone_ID = :arrive_zone_id
+            """), {"arrive_zone_id": arrive_zone_id}).fetchone()
+
+            if not yard_result:
+                debug_logs.append(f"❌ No result returned for Arrive_Zone_ID: {arrive_zone_id}")
+                raise ValueError(f"Yard_ID not found for Arrive_Zone_ID: {arrive_zone_id}")
+
+            if not yard_result[0]:
+                debug_logs.append(f"❌ Yard_ID is NULL for Arrive_Zone_ID: {arrive_zone_id}")
+                raise ValueError(f"Yard_ID is NULL for Arrive_Zone_ID: {arrive_zone_id}")
+
+            yard_id = yard_result[0]
+            debug_logs.append(f"✅ Yard_ID fetched successfully: {yard_id} for Arrive_Zone_ID: {arrive_zone_id}")
+
+
+            # Truck을 빈 Zone에 배치
+            db.session.execute(text("""
+                UPDATE Truck
+                SET Zone_ID = (
+                    SELECT Zone_ID
+                    FROM Zone
+                    WHERE Site_ID IN (
+                        SELECT Site_ID FROM Site
+                        WHERE Yard_ID = :yard_id AND Storage_Type = 'Truck'
+                    ) AND Status = 'Available'
+                    LIMIT 1
+                )
+                WHERE Truck_ID IN (
+                    SELECT Truck_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"yard_id": yard_id, "log_id": log_id})
+            debug_logs.append(f"Truck Zone_ID allocated for Log_ID: {log_id}")
+
+            # Chassis를 빈 Zone에 배치
+            db.session.execute(text("""
+                UPDATE Chassis
+                SET Zone_ID = (
+                    SELECT Zone_ID
+                    FROM Zone
+                    WHERE Site_ID IN (
+                        SELECT Site_ID FROM Site
+                        WHERE Yard_ID = :yard_id AND Storage_Type = 'Chassis'
+                    ) AND Status = 'Available'
+                    LIMIT 1
+                )
+                WHERE Chassis_ID IN (
+                    SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"yard_id": yard_id, "log_id": log_id})
+            debug_logs.append(f"Chassis Zone_ID allocated for Log_ID: {log_id}")
+
+            # Container를 빈 Zone에 배치
+            db.session.execute(text("""
+                UPDATE Container
+                SET Zone_ID = (
+                    SELECT Zone_ID
+                    FROM Zone
+                    WHERE Site_ID IN (
+                        SELECT Site_ID FROM Site
+                        WHERE Yard_ID = :yard_id AND Storage_Type = 'Container'
+                    ) AND Status = 'Available'
+                    LIMIT 1
+                )
+                WHERE Container_ID IN (
+                    SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"yard_id": yard_id, "log_id": log_id})
+            debug_logs.append(f"Container Zone_ID allocated for Log_ID: {log_id}")
+
+            # Trailer를 빈 Zone에 배치
+            db.session.execute(text("""
+                UPDATE Trailer
+                SET Zone_ID = (
+                    SELECT Zone_ID
+                    FROM Zone
+                    WHERE Site_ID IN (
+                        SELECT Site_ID FROM Site
+                        WHERE Yard_ID = :yard_id AND Storage_Type = 'Trailer'
+                    ) AND Status = 'Available'
+                    LIMIT 1
+                )
+                WHERE Trailer_ID IN (
+                    SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                );
+            """), {"yard_id": yard_id, "log_id": log_id})
+            debug_logs.append(f"Trailer Zone_ID allocated for Log_ID: {log_id}")
+
+            # Truck이 저장된 Zone 상태를 In Use로 변경
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'In Use'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID
+                    FROM Truck
+                    WHERE Truck_ID IN (
+                        SELECT Truck_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Truck status set to 'In Use' for Log_ID: {log_id}")
+
+            # Chassis가 저장된 Zone 상태를 In Use로 변경
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'In Use'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID
+                    FROM Chassis
+                    WHERE Chassis_ID IN (
+                        SELECT Chassis_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Chassis status set to 'In Use' for Log_ID: {log_id}")
+
+            # Container가 저장된 Zone 상태를 In Use로 변경
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'In Use'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID
+                    FROM Container
+                    WHERE Container_ID IN (
+                        SELECT Container_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Container status set to 'In Use' for Log_ID: {log_id}")
+
+            # Trailer가 저장된 Zone 상태를 In Use로 변경
+            db.session.execute(text("""
+                UPDATE Zone
+                SET Status = 'In Use'
+                WHERE Zone_ID IN (
+                    SELECT Zone_ID
+                    FROM Trailer
+                    WHERE Trailer_ID IN (
+                        SELECT Trailer_ID FROM Transport_Log WHERE Log_ID = :log_id
+                    )
+                );
+            """), {"log_id": log_id})
+            debug_logs.append(f"Trailer status set to 'In Use' for Log_ID: {log_id}")
+
+        db.session.commit()
+        debug_logs.append("Database commit successful.")
+
+        return jsonify({"success": True, "message": "Transport log updated successfully.", "debug_logs": debug_logs})
+
+    except Exception as e:
+        db.session.rollback()
+        debug_logs.append(f"Error occurred: {str(e)}")
+        print(debug_logs)
+        return jsonify({
+            "success": False,
+            "message": "An error occurred",
+            "error": str(e),
+            "debug_logs": debug_logs
+        }), 500
+
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

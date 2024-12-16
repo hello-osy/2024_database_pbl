@@ -28,14 +28,14 @@
               :disabled="
                 assigningTrip || hasInProgressTrip || trip.assigned !== 0
               "
-              @click.once="handleAcceptWithLogUpdate(trip.id)"
+              @click.once="handleAccept(trip.id)"
             >
               Accept
             </button>
-            <button @click="declineTripWithLogUpdate(trip.id)">Decline</button>
+            <button @click="handleDecline(trip.id)">Decline</button>
           </div>
           <div v-else-if="trip.assigned === 1" class="action-buttons">
-            <button @click="markAsCompleted(trip.id)">Mark as Completed</button>
+            <button @click="openMemoPopup(trip.id)">Mark as Completed</button>
           </div>
           <div v-else-if="trip.assigned === 2" class="action-buttons">
             <button disabled>Completed</button>
@@ -144,15 +144,9 @@ export default {
         );
 
         const result = await response.json();
-        if (!response.ok) {
-          alert(
-            "Failed to update transport log status: " +
-              (result.message || "Unknown error"),
-          );
-          throw new Error(
-            result.message || "Failed to update transport log status",
-          );
-        }
+        if (!response.ok) throw new Error(result.message || "Failed to update status");
+
+        console.log(`🚀 Status '${action}' updated successfully for Log_ID: ${logId}`);
         return result;
       } catch (error) {
         console.error("Error updating transport log status:", error);
@@ -160,66 +154,15 @@ export default {
       }
     },
     async handleAccept(logId) {
-      if (this.hasInProgressTrip) {
-        alert(
-          "You already have an assigned trip in progress. You cannot accept a new trip until the current one is completed.",
-        );
-        return;
-      }
-      try {
-        await this.updateTransportLogStatus(logId, "accept");
-        await this.fetchTrips();
-        alert("Trip accepted successfully!");
-      } catch (error) {
-        console.error("Error while accepting trip:", error);
-      }
+      if (this.hasInProgressTrip) return alert("Finish current trip before accepting a new one.");
+      await this.updateTransportLogStatus(logId, "accept");
+      await this.fetchTrips();
+      alert("Trip accepted successfully!");
     },
-    async handleReject(logId) {
-      try {
-        await this.updateTransportLogStatus(logId, "reject");
-        await this.fetchTrips();
-        alert("Trip declined successfully!");
-      } catch (error) {
-        console.error("Error while rejecting trip:", error);
-      }
-    },
-    async handleComplete() {
-      if (!this.logMemo.trim()) {
-        alert("Memo cannot be empty.");
-        return;
-      }
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          "http://localhost:8080/api/transport_logs/update_memo",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              log_id: this.currentTripId,
-              log_memo: this.logMemo,
-              assigned: 2,
-            }),
-          },
-        );
-
-        const result = await response.json();
-        if (response.ok && result.success) {
-          await this.fetchTrips();
-          alert("Trip marked as completed!");
-          this.closePopup();
-          this.currentTripId = null; // 현재 Trip ID 초기화
-          this.logMemo = ""; // 메모 초기화
-        } else {
-          throw new Error(result.message || "Failed to complete trip");
-        }
-      } catch (error) {
-        console.error("Error completing trip:", error);
-        alert("Failed to mark trip as completed.");
-      }
+    async handleDecline(logId) {
+      await this.updateTransportLogStatus(logId, "decline");
+      await this.fetchTrips();
+      alert("Trip declined successfully!");
     },
     openMemoPopup(tripId) {
       this.showPopup = true;
@@ -233,95 +176,73 @@ export default {
       this.logMemo = "";
     },
     async submitMemo() {
+      const currentTrip = this.trips.find((trip) => trip.id === this.currentTripId);
+      if (currentTrip?.assigned === 2) {
+        alert("This trip is already marked as completed.");
+        return;
+      }
       try {
-        if (!this.logMemo.trim()) {
-          alert("Memo cannot be empty.");
-          return;
-        }
-        const response = await this.updateTripLogMemo(
-          this.currentTripId,
-          this.logMemo,
-          2,
-        );
-        if (response.success) {
-          const tripIndex = this.trips.findIndex(
-            (trip) => trip.id === this.currentTripId,
-          );
-          if (tripIndex !== -1) {
-            this.trips[tripIndex].assigned = 2; // assigned 값을 변경
-            this.trips[tripIndex].logMemo = this.logMemo; // 메모 업데이트
-          }
-          alert("Memo updated and trip marked as completed.");
-          this.closePopup();
-        } else {
-          alert("Failed to update memo: " + response.message);
-        }
+        console.log(`Submitting Memo with Log_ID: ${this.currentTripId}, Action: completed`);
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:8080/api/transport_logs/update_memo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ log_id: this.currentTripId, log_memo: this.logMemo }),
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) throw new Error(result.message || "Failed to update memo");
+        console.log("Memo updated successfully:", result);
+
+        await this.updateTransportLogStatus(this.currentTripId, "completed");
+        console.log("Completed action sent successfully.");
+        await this.fetchTrips();
+        alert("Trip marked as completed!");
+        this.closePopup();
       } catch (error) {
-        alert("An error occurred while updating memo.");
-        console.error("Error in submitMemo:", error);
+        console.error("Error submitting memo:", error);
+        alert("Failed to submit memo.");
       }
     },
-    async updateTripStatus(logId, assigned, completed = false) {
+    async updateTransportLogStatus(logId, action) {
       try {
         const token = localStorage.getItem("token");
+        console.log(`📤 Sending action '${action}' for Log_ID: ${logId}`);
         const response = await fetch(
-          `http://localhost:8080/api/update-transport-log`,
+          "http://localhost:8080/api/transport_log/update_status",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ log_id: logId, assigned, completed }),
-          },
-        );
-        console.log("서버 응답 상태:", response.status);
-        const result = await response.json();
-        console.log("서버 응답 데이터:", result);
-
-        return result;
-      } catch (error) {
-        console.error("Error updating trip status:", error);
-        throw error; // 에러를 호출부로 전달
-      }
-    },
-    async updateTripLogMemo(logId, logMemo, assigned) {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `http://localhost:8080/api/transport_logs/update_memo`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              log_id: logId,
-              log_memo: logMemo,
-              assigned: assigned,
-            }),
+            body: JSON.stringify({ log_id: logId, action }),
           },
         );
 
         const result = await response.json();
-        console.log("API response:", result);
-
         if (!response.ok) {
-          throw new Error(result.message || "Failed to update log memo");
+          throw new Error(result.message || "Failed to update transport log status");
         }
+
+        console.log("✅ Status updated successfully:", result);
+
+        if (result.debug_logs && Array.isArray(result.debug_logs)) {
+          console.group("🚧 Server Debug Logs:");
+          result.debug_logs.forEach((log) => console.log(log));
+          console.groupEnd();
+        }
+
         return result;
       } catch (error) {
-        console.error("Error updating trip log memo:", error);
+        console.error("Error updating transport log status:", error);
         throw error;
       }
-    },
+    }
   },
   mounted() {
     this.fetchTrips();
-    console.log("현재 trips 상태:", this.trips);
-    console.log("현재 assigningTrip 상태:", this.assigningTrip);
-    console.log("hasInProgressTrip 상태:", this.hasInProgressTrip);
   },
 };
 </script>
