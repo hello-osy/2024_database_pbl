@@ -1078,7 +1078,6 @@ def register_transport_log():
             db.session.execute(text(query),{"trailer_id": trailer_id})
             db.session.commit()
             
-        
         return jsonify({"success": True, "message": "Transport log registered successfully!"})
 
     except Exception as e:
@@ -1099,7 +1098,7 @@ def update_transport_log_memo():
         query = text("""
             UPDATE Transport_Log
             SET Log_Memo = :log_memo, Assigned = :assigned
-            WHERE Log_ID = :log_id
+            WHERE Log_ID = :log_id;
         """)
         db.session.execute(query, {'log_memo': log_memo, 'assigned': assigned, 'log_id': log_id})
         db.session.commit()
@@ -1107,6 +1106,108 @@ def update_transport_log_memo():
         return jsonify({"success": True, "message": "Log memo updated successfully"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/get/currentZones", methods=["POST"])
+def get_current_zones():
+    """
+    API Endpoint to fetch current zones based on yard_id and equipment type.
+    """
+    try:
+        # 요청 데이터 받기
+        data = request.get_json()
+        yard_id = data.get("id")
+        equipment_type = data.get("type").lower()  # truck, chassis, container, trailer
+
+        if not yard_id or not equipment_type:
+            return jsonify({"success": False, "message": "Missing yard_id or equipment type"}), 400
+
+        # 장비 타입에 따라 테이블 및 필드 매핑
+        table_mapping = {
+            "truck": "Truck",
+            "chassis": "Chassis",
+            "container": "Container",
+            "trailer": "Trailer"
+        }
+
+        if equipment_type not in table_mapping:
+            return jsonify({"success": False, "message": f"Invalid equipment type: {equipment_type}"}), 400
+
+        type = table_mapping[equipment_type]
+
+        # SQL 쿼리 실행
+        query = f"""
+        SELECT Zone_ID AS id
+        FROM Zone
+        where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type=:truck_id) and Status<>'In Use';
+        """
+        # select * from Zone where Site_ID in (select Site_ID from Site where Yard_ID='HOU_YARD_0001' and Storage_Type='Container') and Status<>'In Use'
+        result = db.session.execute(text(query), {"yard_id": yard_id, "truck_id":type}).fetchall()
+
+        # 결과 반환
+        zones = [{"id": row[0]} for row in result]  # row[0]으로 접근
+        return jsonify({"success": True, "data": zones}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error retrieving zones", "error": str(e)}), 500
+
+
+@app.route("/api/equipment/add", methods=["POST"])
+def add_equipment():
+    """
+    API Endpoint to add equipment to a zone.
+    """
+    try:
+        # 요청 데이터 확인
+        data = request.get_json()
+        equipment_id = data.get("id")
+        zone_id = data.get("zone")
+        equipment_type = data.get("type").lower()
+        yard_id = data.get("yard_id")
+
+        if not all([equipment_id, zone_id, equipment_type, yard_id]):
+            return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+        # 테이블 매핑
+        table_mapping = {
+            "truck": "Truck",
+            "chassis": "Chassis",
+            "container": "Container",
+            "trailer": "Trailer",
+        }
+
+        if equipment_type not in table_mapping:
+            return jsonify({"success": False, "message": f"Invalid equipment type: {equipment_type}"}), 400
+
+        # 장비 삽입
+        query = f"""
+        INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
+        VALUES (:equipment_id, :zone_id, 'Available')
+        """
+        db.session.execute(
+            text(query),
+            {"equipment_id": equipment_id, "zone_id": zone_id},
+        )
+        db.session.commit()
+
+        
+         # 장비 삽입
+        query = f"""
+        INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
+        VALUES (:equipment_id, :zone_id, 'Available')
+        """
+        db.session.execute(
+            text(query),
+            {"equipment_id": equipment_id, "zone_id": zone_id},
+        )
+        db.session.commit()
+
+
+        return jsonify({"success": True, "message": f"{equipment_type.capitalize()} added successfully!"}), 201
+
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error adding equipment", "error": str(e)}), 500
+
 
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
