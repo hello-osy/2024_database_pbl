@@ -276,7 +276,7 @@
           const payload = {
             id: this.newEquipment.id,
             zone: this.newEquipment.zone,
-            type: this.selectedSiteType.toLowerCase(), // Truck, Chassis, Container, Trailer
+            type: this.selectedSiteType.slice(0,-5), // Truck, Chassis, Container, Trailer
             yard_id: this.yardId
           };
 

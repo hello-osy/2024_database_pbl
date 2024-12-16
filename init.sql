@@ -91,12 +91,10 @@ CREATE TABLE Chassis (
 CREATE TABLE Container (
     Container_ID VARCHAR(20) NOT NULL,
     Status VARCHAR(20) NULL,
-    Chassis_ID VARCHAR(10) NOT NULL,
     Type VARCHAR(255) NULL,
     Size VARCHAR(255) NULL,
     Zone_ID VARCHAR(30) NULL,
     PRIMARY KEY (Container_ID),
-    FOREIGN KEY (Chassis_ID) REFERENCES Chassis(Chassis_ID),
     FOREIGN KEY (Zone_ID) REFERENCES Zone(Zone_ID)
 );
 
@@ -446,11 +444,10 @@ FROM (
 -- Flat Rack 컨테이너는 20ST, 40ST가 일반적임
 
 -- Container 데이터 삽입
-INSERT INTO Container (Container_ID, Status, Chassis_ID, Type, Size, Zone_ID)
+INSERT INTO Container (Container_ID, Status, Type, Size, Zone_ID)
 SELECT 
     CONCAT('CT_', LPAD(t.num, 4, '0')) AS Container_ID,
     'Available' AS Status,
-    CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
     CASE 
         WHEN t.num % 4 = 0 THEN 'Dry'
         WHEN t.num % 4 = 1 THEN 'Reefer'

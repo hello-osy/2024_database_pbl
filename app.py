@@ -1184,6 +1184,7 @@ def add_equipment():
         INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
         VALUES (:equipment_id, :zone_id, 'Available')
         """
+        print(f"query : {query}")
         db.session.execute(
             text(query),
             {"equipment_id": equipment_id, "zone_id": zone_id},
@@ -1191,16 +1192,16 @@ def add_equipment():
         db.session.commit()
 
         
-         # 장비 삽입
-        query = f"""
-        INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
-        VALUES (:equipment_id, :zone_id, 'Available')
-        """
-        db.session.execute(
-            text(query),
-            {"equipment_id": equipment_id, "zone_id": zone_id},
-        )
-        db.session.commit()
+        #  # 장비 삽입
+        # query = f"""
+        # INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
+        # VALUES (:equipment_id, :zone_id, 'Available')
+        # """
+        # db.session.execute(
+        #     text(query),
+        #     {"equipment_id": equipment_id, "zone_id": zone_id},
+        # )
+        # db.session.commit()
 
 
         return jsonify({"success": True, "message": f"{equipment_type.capitalize()} added successfully!"}), 201
