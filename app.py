@@ -51,6 +51,98 @@ with app.app_context():
     except Exception as e:
         print(f"테이블 생성 실패: {str(e)}")
 
+@app.route('/api/transport_logs/release/<int:log_id>', methods=['POST'])
+def release_transport_log(log_id):
+    try:
+        # 운송 로그 조회
+        result = db.session.execute(text("""
+            SELECT 
+                Truck_ID, Chassis_ID, Container_ID, Trailer_ID 
+            FROM Transport_Log 
+            WHERE Log_ID = :log_id AND Assigned = 0
+        """), {"log_id": log_id}).fetchone()
+
+        if not result:
+            return jsonify({"success": False, "message": f"Log ID {log_id} not found or already released"}), 404
+
+        # 할당 해제 (Assigned 상태 업데이트)
+        db.session.execute(text("""
+            UPDATE Transport_Log
+            SET Assigned = -1
+            WHERE Log_ID = :log_id
+        """), {"log_id": log_id})
+
+        # 각 장비의 상태 업데이트
+        if result.Truck_ID:
+            db.session.execute(text("""
+                UPDATE Truck
+                SET Status = 'Available'
+                WHERE Truck_ID = :truck_id
+            """), {"truck_id": result.Truck_ID})
+
+        if result.Chassis_ID:
+            db.session.execute(text("""
+                UPDATE Chassis
+                SET Status = 'Available'
+                WHERE Chassis_ID = :chassis_id
+            """), {"chassis_id": result.Chassis_ID})
+
+        if result.Container_ID:
+            db.session.execute(text("""
+                UPDATE Container
+                SET Status = 'Available'
+                WHERE Container_ID = :container_id
+            """), {"container_id": result.Container_ID})
+
+        if result.Trailer_ID:
+            db.session.execute(text("""
+                UPDATE Trailer
+                SET Status = 'Available'
+                WHERE Trailer_ID = :trailer_id
+            """), {"trailer_id": result.Trailer_ID})
+
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Log {log_id} released and equipment status updated"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "An error occurred while releasing the log", "error": str(e)}), 500
+
+@app.route('/api/equipment/available', methods=['PUT'])
+def update_equipment_status():
+    try:
+        # 요청 데이터
+        data = request.json
+        equipment_id = data.get('id')
+
+        if not equipment_id:
+            return jsonify({"success": False, "message": "Equipment ID is required"}), 400
+
+        # 트럭, 샤시, 컨테이너, 트레일러 테이블을 순차적으로 확인
+        queries = {
+            "Truck": "UPDATE Truck SET Status='Available' WHERE Truck_ID=:equipment_id",
+            "Chassis": "UPDATE Chassis SET Status='Available' WHERE Chassis_ID=:equipment_id",
+            "Container": "UPDATE Container SET Status='Available' WHERE Container_ID=:equipment_id",
+            "Trailer": "UPDATE Trailer SET Status='Available' WHERE Trailer_ID=:equipment_id",
+        }
+
+        success = False
+
+        for table, query in queries.items():
+            result = db.session.execute(text(query), {"equipment_id": equipment_id})
+            if result.rowcount > 0:
+                success = True
+                break
+
+        if not success:
+            return jsonify({"success": False, "message": f"Equipment {equipment_id} not found"}), 404
+
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Equipment {equipment_id} updated to 'Available'"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "An error occurred while updating equipment status", "error": str(e)}), 500
 
 # 기본 라우트
 @app.route("/")
@@ -1078,7 +1170,6 @@ def register_transport_log():
             db.session.execute(text(query),{"trailer_id": trailer_id})
             db.session.commit()
             
-        
         return jsonify({"success": True, "message": "Transport log registered successfully!"})
 
     except Exception as e:
@@ -1099,7 +1190,7 @@ def update_transport_log_memo():
         query = text("""
             UPDATE Transport_Log
             SET Log_Memo = :log_memo, Assigned = :assigned
-            WHERE Log_ID = :log_id
+            WHERE Log_ID = :log_id;
         """)
         db.session.execute(query, {'log_memo': log_memo, 'assigned': assigned, 'log_id': log_id})
         db.session.commit()
@@ -1107,6 +1198,109 @@ def update_transport_log_memo():
         return jsonify({"success": True, "message": "Log memo updated successfully"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/get/currentZones", methods=["POST"])
+def get_current_zones():
+    """
+    API Endpoint to fetch current zones based on yard_id and equipment type.
+    """
+    try:
+        # 요청 데이터 받기
+        data = request.get_json()
+        yard_id = data.get("id")
+        equipment_type = data.get("type").lower()  # truck, chassis, container, trailer
+
+        if not yard_id or not equipment_type:
+            return jsonify({"success": False, "message": "Missing yard_id or equipment type"}), 400
+
+        # 장비 타입에 따라 테이블 및 필드 매핑
+        table_mapping = {
+            "truck": "Truck",
+            "chassis": "Chassis",
+            "container": "Container",
+            "trailer": "Trailer"
+        }
+
+        if equipment_type not in table_mapping:
+            return jsonify({"success": False, "message": f"Invalid equipment type: {equipment_type}"}), 400
+
+        type = table_mapping[equipment_type]
+
+        # SQL 쿼리 실행
+        query = f"""
+        SELECT Zone_ID AS id
+        FROM Zone
+        where Site_ID in (select Site_ID from Site where Yard_ID=:yard_id and Storage_Type=:truck_id) and Status<>'In Use';
+        """
+        # select * from Zone where Site_ID in (select Site_ID from Site where Yard_ID='HOU_YARD_0001' and Storage_Type='Container') and Status<>'In Use'
+        result = db.session.execute(text(query), {"yard_id": yard_id, "truck_id":type}).fetchall()
+
+        # 결과 반환
+        zones = [{"id": row[0]} for row in result]  # row[0]으로 접근
+        return jsonify({"success": True, "data": zones}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error retrieving zones", "error": str(e)}), 500
+
+
+@app.route("/api/equipment/add", methods=["POST"])
+def add_equipment():
+    """
+    API Endpoint to add equipment to a zone.
+    """
+    try:
+        # 요청 데이터 확인
+        data = request.get_json()
+        equipment_id = data.get("id")
+        zone_id = data.get("zone")
+        equipment_type = data.get("type").lower()
+        yard_id = data.get("yard_id")
+
+        if not all([equipment_id, zone_id, equipment_type, yard_id]):
+            return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+        # 테이블 매핑
+        table_mapping = {
+            "truck": "Truck",
+            "chassis": "Chassis",
+            "container": "Container",
+            "trailer": "Trailer",
+        }
+
+        if equipment_type not in table_mapping:
+            return jsonify({"success": False, "message": f"Invalid equipment type: {equipment_type}"}), 400
+
+        # 장비 삽입
+        query = f"""
+        INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
+        VALUES (:equipment_id, :zone_id, 'Available')
+        """
+        print(f"query : {query}")
+        db.session.execute(
+            text(query),
+            {"equipment_id": equipment_id, "zone_id": zone_id},
+        )
+        db.session.commit()
+
+        
+        #  # 장비 삽입
+        # query = f"""
+        # INSERT INTO {table_mapping[equipment_type]} ({table_mapping[equipment_type]}_ID, Zone_ID, Status)
+        # VALUES (:equipment_id, :zone_id, 'Available')
+        # """
+        # db.session.execute(
+        #     text(query),
+        #     {"equipment_id": equipment_id, "zone_id": zone_id},
+        # )
+        # db.session.commit()
+
+
+        return jsonify({"success": True, "message": f"{equipment_type.capitalize()} added successfully!"}), 201
+
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error adding equipment", "error": str(e)}), 500
+
 
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
