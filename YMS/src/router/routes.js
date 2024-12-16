@@ -12,7 +12,6 @@ import DashBoard from "@/pages/Admin/DashBoard.vue";
 import DriverList from "@/pages/Admin/DriverList.vue";
 import TransportLog from "@/pages/Admin/TransportLog.vue";
 import AssignedManagement from "@/pages/Admin/AssignedManagement.vue";
-import YardVisualization from "../pages/Admin/YardVisualization.vue";
 
 // Admin pages - division
 import LApage from "@/pages/Admin/Division/LApage.vue";
@@ -77,11 +76,6 @@ const routes = [
         name: "SAVpage",
         component: SAVpage,
         meta: { division: "SAV" },
-      },
-      {
-        path: "yard-visualization",
-        name: "YardVisualization",
-        component: YardVisualization,
       },
       {
         path: "driverlist",

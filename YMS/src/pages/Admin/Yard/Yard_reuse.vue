@@ -342,8 +342,8 @@
         try {
           const response = await axios.get("http://localhost:8080/api/yard/stats", {
             params: { yard_id: this.yardId },
-          });c3cgt
-
+          });
+          
           if (response.data.success) {
             const { total_trucks, total_chassis, total_containers, total_trailers } =
               response.data.data;
