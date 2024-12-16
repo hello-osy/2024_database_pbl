@@ -15,28 +15,35 @@
 
     <div class="yard-layout">
       <div class="site-block" v-for="(site, index) in filteredSiteStatus" :key="index">
-        <h3 class="site-title">{{ site.name }}</h3>
+        <div class="site-header">
+          <h3 class="site-title">{{ site.name.slice(0, -5) }}</h3>
+          <div class="button-container">
+            <button class="truck-controls" @click="openAddModal(site.name)">+</button>
+            <button class="truck-controls" @click="openDeleteModal(site.name)">-</button>
+          </div>
+        </div>
         <div class="truck-list">
           <div
             v-for="truck in site.trucks"
             :key="truck.id"
             :class="['truck-icon', truck.status, { assigned: isAssigned(truck) }]"
+            :style="{ backgroundImage: `url(${getSvgPath(site.name)})` }"
             @click="selectTruck(truck)"
           >
-            {{ truck.id }}
+            <span>{{ truck.id }}</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Truck만 선택 가능한 Modal -->
-    <div v-if="selectedTruck && (selectedTruck.id.startsWith('T'))" class="modal">
-      <div class="modal-content">
+    <div v-if="selectedTruck" class="modal">
+      <div v-if="selectedTruck" class="modal-content">
         <h3>
-          Configure {{ selectedTruck.id.startsWith('TL') ? 'Trailer' : 'Truck' }} {{ selectedTruck.id }}
+          Configure Truck {{ selectedTruck.id }}
         </h3>
         
-        <div v-if="selectedTruck && !selectedTruck.id.startsWith('TL')">
+        <div v-if="selectedTruck">
         
           <div class="modal-grid">
           <!-- Left Column -->
@@ -67,16 +74,8 @@
             <div class="modal-column">
               <label>Arrival Date:</label>
               <input v-model="arriveDate" type="date" placeholder="Select arrival date" />
-
-              <!-- <label>Arrive Zone:</label>
-              <input v-model="arriveZone" placeholder="Enter arrival zone" /> -->
-
               <label>Arrive Zone:</label>
-              <!-- <select v-model="arriveZone">
-                <option v-for="zone in zones" :key="zone" :value="zone">
-                  {{ zone }}
-                </option>
-              </select> -->
+
               <div class="custom-select-container">
                 <!-- 입력창: 검색 및 선택된 값을 표시 -->
                 <input
@@ -102,9 +101,6 @@
                   </li>
                 </ul>
               </div>
-
-
-
               <label>Assign Driver:</label>
               <select v-model="selectedDriver">
                 <option v-for="driver in drivers" :key="driver.User_ID" :value="driver">
@@ -119,11 +115,44 @@
         </div>
       </div>
     </div>
+
+    <!-- Add Equipment Modal -->
+    <div v-if="showAddModal" class="modal">
+      <div class="modal-content">
+        <h3>Add {{ selectedSiteType.slice(0, -5) }}</h3>
+        <label>{{ selectedSiteType.slice(0, -5) }} ID:</label>
+        <input v-model="newEquipment.id" placeholder="Enter ID" />
+        <label>Zone ID:</label>
+        <select v-model="newEquipment.zone">
+          <option v-for="zone in getCurrentZoneList()" :key="zone.id" :value="zone.id">
+            {{ zone.id }}
+          </option>
+        </select>
+
+        <button @click="addEquipment">Add</button>
+        <button @click="closeModal">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Delete Equipment Modal -->
+    <div v-if="showDeleteModal" class="modal">
+      <div class="modal-content">
+        <h3>Delete {{ selectedSiteType.slice(0, -5) }}</h3>
+        <label>Select {{ selectedSiteType.slice(0, -5) }} to Delete:</label>
+        <select v-model="equipmentToDelete">
+          <option v-for="item in filteredEquipmentList" :key="item.id" :value="item.id">
+            {{ item.id }}
+          </option>
+        </select>
+
+        <button @click="deleteEquipment">Delete</button>
+        <button @click="closeModal">Cancel</button>
+      </div>
+    </div>
   </div>
 </template>
   
-  <script>
-  import { mapActions } from "vuex";
+<script>
   import axios from "axios";
 
   export default {
@@ -144,6 +173,14 @@
         zones: [],
         zoneSearchQuery: "", // 검색 입력 값
         showDropdown: false, // 드롭다운 표시 여부
+
+        // Truck 관련 상태
+        selectedSiteType: "",
+        showAddModal: false,
+        showDeleteModal: false,
+        newEquipment: { id: "", zone: "" }, // 추가할 장비 정보
+        equipmentToDelete: null, // 삭제할 장비 ID
+        currentZones: [],
       };
     },
     computed: {
@@ -177,8 +214,126 @@
       trailerList() {
         return this.siteStatus.find((site) => site.name === "Trailer Site").trucks;
       },
+
+      // 현재 선택된 site의 장비 리스트 반환
+      filteredEquipmentList() {
+        const currentSite = this.siteStatus.find(
+          (site) => site.name === this.selectedSiteType
+        );
+        return currentSite ? currentSite.trucks : [];
+      },
     },
     methods: {
+      truckList(){
+        return this.siteStatus.find((site) => site.name === "Truck Site").trucks;
+      },
+      getSvgPath(siteName) {
+        const svgMapping = {
+          "Truck Site": require("@/assets/svg/truck_04.svg"),
+          "Chassis Site": require("@/assets/svg/chassis_03.svg"),
+          "Container Site": require("@/assets/svg/container_03.svg"),
+          "Trailer Site": require("@/assets/svg/trailer_02.svg"),
+        };
+        return svgMapping[siteName] || svgMapping["Truck Site"];
+      },
+      // 현재 Zone 리스트 반환
+      getCurrentZoneList() {
+        // currentZones가 빈 배열이면 빈 배열 반환
+        if (!this.currentZones || this.currentZones.length === 0) {
+          return [];
+        }
+        return this.currentZones;
+      },
+
+
+      async openAddModal(siteName) {
+        this.selectedSiteType = siteName;
+        this.showAddModal = true;
+
+        // 서버에서 currentZones 새로 불러오기
+        try {
+          const response = await axios.post("http://localhost:8080/api/get/currentZones", {
+            id: this.yardId,
+            type: siteName.slice(0, -5),
+          });
+          if (response.data.success) {
+            this.currentZones = response.data.data;
+          } else {
+            console.error("Failed to fetch zones:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Error fetching zones:", error.message);
+        }
+      },
+      openDeleteModal(siteName) {
+        this.selectedSiteType = siteName;
+        this.showDeleteModal = true;
+      },
+      closeModal() {
+        this.showAddModal = false;
+        this.showDeleteModal = false;
+        this.newEquipment = { id: "", zone: "" };
+        this.equipmentToDelete = null;
+        this.selectedSiteType = "";
+        this.currentZones = [];
+      },
+
+      // 장비 추가
+      async addEquipment() {
+        if (!this.newEquipment.id || !this.newEquipment.zone) {
+          alert("ID와 Zone을 입력해주세요.");
+          return;
+        }
+
+        try {
+          const payload = {
+            id: this.newEquipment.id,
+            zone: this.newEquipment.zone,
+            type: this.selectedSiteType.slice(0,-5), // Truck, Chassis, Container, Trailer
+            yard_id: this.yardId
+          };
+
+          const response = await axios.post("http://localhost:8080/api/equipment/add", payload);
+
+          if (response.data.success) {
+            alert(`${this.selectedSiteType} added successfully!`);
+            this.fetchSiteStats(); // 데이터 다시 불러오기
+            this.closeModal();
+          } else {
+            alert("Failed to add equipment: " + response.data.message);
+          }
+        } catch (error) {
+          console.error("Error adding equipment:", error.message);
+        }
+      },
+
+      // 장비 제거
+      async deleteEquipment() {
+        if (!this.equipmentToDelete) {
+          alert("Please select an equipment to delete.");
+          return;
+        }
+
+        try {
+          const payload = {
+            id: this.equipmentToDelete,
+            type: this.selectedSiteType.slice(0,-5),
+          };
+
+          const response = await axios.post("http://localhost:8080/api/equipment/delete", payload);
+
+          if (response.data.success) {
+            alert(`${this.selectedSiteType} deleted successfully!`);
+            this.fetchSiteStats();
+            this.closeModal();
+          } else {
+            alert("Failed to delete equipment: " + response.data.message);
+          }
+        } catch (error) {
+          console.error("Error deleting equipment:", error.message);
+        }
+      },
+
       extractYardIdFromUrl() {
         const fullPath = this.$route.fullPath; // 현재 URL 경로
         const yardId = fullPath.split("/").pop(); // 마지막 경로 추출 (예: HOU_YARD_0002)
@@ -190,7 +345,7 @@
           const response = await axios.get("http://localhost:8080/api/yard/stats", {
             params: { yard_id: this.yardId },
           });
-
+          
           if (response.data.success) {
             const { total_trucks, total_chassis, total_containers, total_trailers } =
               response.data.data;
@@ -308,15 +463,19 @@
       },
 
 
-      ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
+      // ...mapActions(["addEquipment"]), // Vuex의 addEquipment 액션 매핑
       selectTruck(truck) {
-        // Truck(T) 또는 Trailer(TL)만 선택 가능
-        if (truck.id.startsWith("T") || truck.id.startsWith("TL")) {
+        const truckList = this.truckList(); // Truck Site의 트럭 리스트 가져오기
+        const isTruck = truckList.some((t) => t.id === truck.id); // 선택한 객체가 Truck에 있는지 확인
+        
+        if (isTruck) {
           this.selectedTruck = truck;
           this.selectedChassis = null;
           this.selectedContainer = null;
+          this.selectedTrailer = null;
+          console.log("Truck selected:", truck);
         } else {
-          alert("Only Truck can be configured.");
+          alert("This equipment is not registered in the Truck list.");
         }
       },
       isAssigned(equipment) {
@@ -324,7 +483,6 @@
           (assigned) => assigned.id === equipment.id
         );
       },
-
 
       confirmSelection() {
         // 검증 로직
@@ -379,15 +537,22 @@
             },
           }));
 
-        // Vuex에 데이터 추가
-        newAssignments.forEach((equipment) => {
-          this.addEquipment(equipment);
-        });
+        // // Vuex에 데이터 추가
+        // newAssignments.forEach((equipment) => {
+        //   this.addEquipment(equipment);
+        // });
         
         this.submitToServer();
 
         // 입력값 초기화
         this.resetSelection();
+
+        // 데이터 다시 가져오기
+        this.extractYardIdFromUrl(); // URL에서 Yard ID 다시 추출
+        this.fetchYardStats(); // 새 데이터를 다시 요청
+        this.fetchDriverStats();
+        this.fetchSiteStats();
+        this.fetchZones(); // Zone_ID 데이터 가져오기
       },
 
 
@@ -439,8 +604,9 @@
   </script>
   
 <style scoped>
+
 .yard-content {
-  padding: 20px;
+  padding: 60px;
 }
 
 .search-bar {
@@ -490,7 +656,7 @@
 .stats-title {
   font-size: 1.2rem;
   margin-bottom: 10px;
-  font-weight: bold;
+  font-weight: bold;  
 }
 
 .stats-value {
@@ -507,7 +673,7 @@
 
 .site-block {
   background-color: #f8f9fa;
-  padding: 15px;
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -521,31 +687,44 @@
 .truck-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 15px;
 }
 
 .truck-icon {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex; /* Keeps the background image */
+  justify-content: center;
+  align-items: center;
   width: 60px;
   height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #fff;
-  text-align: center;
+  cursor: pointer;
+  position: relative; /* Needed for positioning the text */
+  padding: 20px;
+}
+
+.truck-icon span {
+  position: absolute; /* Position text relative to truck-icon */
+  bottom: -20px; /* Adjust text position to bottom */
+  right: 3px; /* Adjust text position to right */
+  color: rgb(0, 0, 0);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 .in-dock {
-  background-color: #007bff;
+  box-shadow: #ddd;
 }
 .Available {
-  background-color: #28a745;
+  box-shadow: #333;
 }
 .Reserved{
-  border: 2px solid #ffa726;
-  box-shadow: 0 0 8px #ffa726;
+  border: 2px solid #ba4cdb;
+  box-shadow: 0 0 8px #ba4cdb;
 }
 
 
@@ -692,6 +871,34 @@
   color: #999;
   text-align: center;
 }
+
+.site-header {
+  display: flex; /* Flexbox 사용 */
+  justify-content: space-between; /* 양쪽 정렬 */
+  align-items: center; /* 수직 가운데 정렬 */
+  width: 100%; /* 부모 컨테이너 너비 */
+}
+
+.button-container {
+  display: flex;
+  gap: 10px; /* 버튼 간 여백 */
+}
+
+.truck-controls {
+  padding: 5px 10px;
+  font-size: 1rem;
+  border: none;
+  background-color: #9999993a;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.truck-controls:hover {
+  background-color: #0056b3;
+}
+
 
 </style>
 

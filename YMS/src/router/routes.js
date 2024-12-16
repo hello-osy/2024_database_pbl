@@ -12,7 +12,13 @@ import DashBoard from "@/pages/Admin/DashBoard.vue";
 import DriverList from "@/pages/Admin/DriverList.vue";
 import TransportLog from "@/pages/Admin/TransportLog.vue";
 import AssignedManagement from "@/pages/Admin/AssignedManagement.vue";
-import YardVisualization from "../pages/Admin/YardVisualization.vue";
+
+// Admin pages - division
+import LApage from "@/pages/Admin/Division/LApage.vue";
+import PHXpage from "@/pages/Admin/Division/PHXpage.vue";
+import HOUpage from "@/pages/Admin/Division/HOUpage.vue";
+import SAVpage from "@/pages/Admin/Division/SAVpage.vue";
+import MOBpage from "@/pages/Admin/Division/MOBpage.vue";
 
 // Driver pages
 import DriverDashboard from "@/pages/Driver/DriverDashboard.vue";
@@ -34,7 +40,7 @@ const routes = [
   {
     path: "/admin",
     component: DashboardLayout,
-    redirect: "/division",
+    redirect: "/admin/dashboard",
     children: [
       {
         path: "dashboard",
@@ -42,9 +48,34 @@ const routes = [
         component: DashBoard,
       },
       {
-        path: "yard-visualization",
-        name: "YardVisualization",
-        component: YardVisualization,
+        path: "lapage",
+        name: "LApage",
+        component: LApage,
+        meta: { division: "LA" },
+      },
+      {
+        path: "phxpage",
+        name: "PHXpage",
+        component: PHXpage,
+        meta: { division: "PHX" },
+      },
+      {
+        path: "houpage",
+        name: "HOUpage",
+        component: HOUpage,
+        meta: { division: "HOU" },
+      },
+      {
+        path: "mobpage",
+        name: "MOBpage",
+        component: MOBpage,
+        meta: { division: "MOB" },
+      },
+      {
+        path: "savpage",
+        name: "SAVpage",
+        component: SAVpage,
+        meta: { division: "SAV" },
       },
       {
         path: "driverlist",

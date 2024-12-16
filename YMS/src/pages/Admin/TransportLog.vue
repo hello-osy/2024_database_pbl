@@ -6,13 +6,13 @@
     <table class="log-table" v-if="transportLogs.length">
       <thead>
         <tr>
-          <th>Driver</th>
-          <th>Vehicle</th>
-          <th>Depart Zone</th>
-          <th>Depart Date</th>
-          <th>Arrive Zone</th>
-          <th>Arrive Date</th>
-          <th>Status</th>
+          <th @click="sortLogs('driver')">Driver <span v-if="sortBy === 'driver'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="sortLogs('vehicle')">Vehicle <span v-if="sortBy === 'vehicle'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="sortLogs('departZone')">Depart Zone <span v-if="sortBy === 'departZone'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="sortLogs('departDate')">Depart Date <span v-if="sortBy === 'departDate'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="sortLogs('arriveZone')">Arrive Zone <span v-if="sortBy === 'arriveZone'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="sortLogs('arriveDate')">Arrive Date <span v-if="sortBy === 'arriveDate'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="sortLogs('status')">Status <span v-if="sortBy === 'status'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
           <th style="width: 15%">Memo</th>
         </tr>
       </thead>
@@ -55,6 +55,8 @@ export default {
       transportLogs: [], // 초기 데이터
       showPopup: false, // 팝업 표시 여부
       selectedMemo: "", // 선택된 메모 내용
+      sortBy: "", // 현재 정렬 기준 필드
+      sortOrder: "asc", // 정렬 순서 (asc: 오름차순, desc: 내림차순)
     };
   },
   methods: {
@@ -111,6 +113,25 @@ export default {
       if (status === "Reserved") return "Reserved";
       if (status === "Rejected") return "Rejected";
       return "";
+    },
+    sortLogs(field) {
+      if (this.sortBy === field) {
+        // 같은 필드 클릭 시 정렬 순서 변경
+        this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
+      } else {
+        // 새로운 필드 클릭 시 정렬 기준 변경
+        this.sortBy = field;
+        this.sortOrder = "asc";
+      }
+      this.transportLogs.sort((a, b) => {
+        const valA = a[field] || ""; // null 값 방지
+        const valB = b[field] || "";
+        if (this.sortOrder === "asc") {
+          return valA > valB ? 1 : valA < valB ? -1 : 0;
+        } else {
+          return valA < valB ? 1 : valA > valB ? -1 : 0;
+        }
+      });
     },
   },
   mounted() {
@@ -174,7 +195,7 @@ p {
 }
 
 .log-table .Completed {
-  color: #2a9d8f;
+  color: #38a169;
 }
 
 .log-table .Delivering {
@@ -182,7 +203,7 @@ p {
 }
 
 .log-table .Reserved {
-  color: #457b9d;
+  color: #ba4cdb;
 }
 
 .memo-cell {

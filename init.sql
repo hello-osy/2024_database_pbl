@@ -180,6 +180,25 @@ CREATE TABLE Transport_Log (
     FOREIGN KEY (Arrive_Zone_ID) REFERENCES Zone(Zone_ID)
 );
 
+
+
+-- Trailer, Chassis, Container 외래키 삭제
+ALTER TABLE Chassis DROP FOREIGN KEY chassis_ibfk_1;
+ALTER TABLE Chassis DROP COLUMN Truck_ID;
+
+ALTER TABLE Trailer DROP FOREIGN KEY Trailer_ibfk_2;
+ALTER TABLE Trailer DROP COLUMN Truck_ID;
+
+ALTER TABLE Container DROP FOREIGN KEY Container_ibfk_1;
+ALTER TABLE Container DROP COLUMN Chassis_ID;
+
+-- 삭제 데이터 전용 Archive 생성
+CREATE TABLE Truck_Archive LIKE Truck;
+CREATE TABLE Chassis_Archive LIKE Chassis;
+CREATE TABLE Trailer_Archive LIKE Trailer;
+CREATE TABLE Container_Archive LIKE Container;
+
+
 -- 테스트 데이터 삽입
 
 -- Address 데이터 삽입
@@ -418,7 +437,7 @@ FROM (
 
 
 -- Chassis 데이터 삽입
-INSERT INTO Chassis (Chassis_ID, Status, Type, Truck_ID, Zone_ID)
+INSERT INTO Chassis (Chassis_ID, Status, Type, Zone_ID)
 SELECT 
     CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
     'Available' AS Status,
@@ -427,7 +446,6 @@ SELECT
         WHEN t.num % 3 = 1 THEN 'Light'
         ELSE 'Tandem'
     END AS Type,
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID,
     CONCAT('C_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
@@ -446,11 +464,10 @@ FROM (
 -- Flat Rack 컨테이너는 20ST, 40ST가 일반적임
 
 -- Container 데이터 삽입
-INSERT INTO Container (Container_ID, Status, Chassis_ID, Type, Size, Zone_ID)
+INSERT INTO Container (Container_ID, Status, Type, Size, Zone_ID)
 SELECT 
     CONCAT('CT_', LPAD(t.num, 4, '0')) AS Container_ID,
     'Available' AS Status,
-    CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
     CASE 
         WHEN t.num % 4 = 0 THEN 'Dry'
         WHEN t.num % 4 = 1 THEN 'Reefer'
@@ -475,13 +492,12 @@ FROM (
 -- 53' 컨테이너는 45피트 컨테이너 + 섀시와 동급임
 
 -- Trailer 데이터 삽입
-INSERT INTO Trailer (Trailer_ID, Status, Type, Zone_ID, Truck_ID)
+INSERT INTO Trailer (Trailer_ID, Status, Type, Zone_ID)
 SELECT 
     CONCAT('TL_', LPAD(t.num, 4, '0')) AS Trailer_ID,
     'Available' AS Status,
     CASE WHEN t.num % 2 = 0 THEN '48\'' ELSE '53\'' END AS Type,
-    CONCAT('TL_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID,
-    NULL AS Truck_ID
+    CONCAT('TL_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
     UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12
@@ -562,10 +578,10 @@ SELECT
         ELSE NULL -- Trailer가 없는 경우 NULL
     END AS Trailer_ID,
     CONCAT('C_ZONE_', LPAD(t.num, 4, '0')) AS Depart_Zone_ID, -- 출발 Zone
-    DATE_ADD(CURDATE(), INTERVAL t.num DAY) AS Depart_Date, -- 출발 날짜
+    DATE_ADD(CURDATE(), INTERVAL t.num -90 DAY) AS Depart_Date, -- 출발 날짜 (한 달 전)
     CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Arrive_Zone_ID, -- 도착 Zone
-    DATE_ADD(CURDATE(), INTERVAL t.num + 1 DAY) AS Arrive_Date, -- 도착 날짜
-    0 AS Assigned,
+    DATE_ADD(CURDATE(), INTERVAL t.num -89 DAY) AS Arrive_Date, -- 도착 날짜 (한 달 전)
+    2 AS Assigned, -- Assigned 값을 2로 설정
     CONCAT('Transport log entry #', t.num) AS Log_Memo -- 로그 메모
 FROM (
     -- 숫자 1부터 20까지 생성
@@ -577,6 +593,7 @@ FROM (
 WHERE CONCAT('T_', LPAD(MOD(t.num - 1, 6) + 1, 4, '0')) IN (
     SELECT Truck_ID FROM Truck -- Truck 테이블의 Truck_ID를 참조
 );
+
 
 -- 미사용 Truck -> Zone 등록
 UPDATE Zone
