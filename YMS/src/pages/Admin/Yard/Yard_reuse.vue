@@ -21,9 +21,10 @@
             v-for="truck in site.trucks"
             :key="truck.id"
             :class="['truck-icon', truck.status, { assigned: isAssigned(truck) }]"
+            :style="{ backgroundImage: `url(${getSvgPath(site.name)})` }"
             @click="selectTruck(truck)"
           >
-            {{ truck.id }}
+            <span>{{ truck.id }}</span>
           </div>
         </div>
       </div>
@@ -122,7 +123,7 @@
   </div>
 </template>
   
-  <script>
+<script>
   import { mapActions } from "vuex";
   import axios from "axios";
 
@@ -179,6 +180,15 @@
       },
     },
     methods: {
+      getSvgPath(siteName) {
+        const svgMapping = {
+          "Truck Site": require("@/assets/svg/truck_04.svg"),
+          "Chassis Site": require("@/assets/svg/chassis_03.svg"),
+          "Container Site": require("@/assets/svg/container_03.svg"),
+          "Trailer Site": require("@/assets/svg/trailer_02.svg"),
+        };
+        return svgMapping[siteName] || svgMapping["Truck Site"];
+      },
       extractYardIdFromUrl() {
         const fullPath = this.$route.fullPath; // 현재 URL 경로
         const yardId = fullPath.split("/").pop(); // 마지막 경로 추출 (예: HOU_YARD_0002)
@@ -325,7 +335,6 @@
         );
       },
 
-
       confirmSelection() {
         // 검증 로직
         if (!this.selectedTruck) {
@@ -439,8 +448,9 @@
   </script>
   
 <style scoped>
+
 .yard-content {
-  padding: 20px;
+  padding: 60px;
 }
 
 .search-bar {
@@ -490,7 +500,7 @@
 .stats-title {
   font-size: 1.2rem;
   margin-bottom: 10px;
-  font-weight: bold;
+  font-weight: bold;  
 }
 
 .stats-value {
@@ -507,7 +517,7 @@
 
 .site-block {
   background-color: #f8f9fa;
-  padding: 15px;
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -521,32 +531,44 @@
 .truck-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 15px;
 }
 
 .truck-icon {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex; /* Keeps the background image */
+  justify-content: center;
+  align-items: center;
   width: 60px;
   height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #fff;
-  text-align: center;
+  cursor: pointer;
+  position: relative; /* Needed for positioning the text */
+  padding: 20px;
+}
+
+.truck-icon span {
+  position: absolute; /* Position text relative to truck-icon */
+  bottom: -20px; /* Adjust text position to bottom */
+  right: 3px; /* Adjust text position to right */
+  color: rgb(0, 0, 0);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 .in-dock {
-  background-color: #007bff;
+  box-shadow: #ddd;
 }
 .Available {
-  background-color: #28a745;
+  box-shadow: #333;
 }
 .Reserved{
   border: 2px solid #ba4cdb;
   box-shadow: 0 0 8px #ba4cdb;
-  background-color: #ba4cdb;
 }
 
 
