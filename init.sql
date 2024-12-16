@@ -91,10 +91,12 @@ CREATE TABLE Chassis (
 CREATE TABLE Container (
     Container_ID VARCHAR(20) NOT NULL,
     Status VARCHAR(20) NULL,
+    Chassis_ID VARCHAR(10) NOT NULL,
     Type VARCHAR(255) NULL,
     Size VARCHAR(255) NULL,
     Zone_ID VARCHAR(30) NULL,
     PRIMARY KEY (Container_ID),
+    FOREIGN KEY (Chassis_ID) REFERENCES Chassis(Chassis_ID),
     FOREIGN KEY (Zone_ID) REFERENCES Zone(Zone_ID)
 );
 
@@ -177,6 +179,25 @@ CREATE TABLE Transport_Log (
     FOREIGN KEY (Depart_Zone_ID) REFERENCES Zone(Zone_ID),
     FOREIGN KEY (Arrive_Zone_ID) REFERENCES Zone(Zone_ID)
 );
+
+
+
+-- Trailer, Chassis, Container 외래키 삭제
+ALTER TABLE Chassis DROP FOREIGN KEY chassis_ibfk_1;
+ALTER TABLE Chassis DROP COLUMN Truck_ID;
+
+ALTER TABLE Trailer DROP FOREIGN KEY Trailer_ibfk_2;
+ALTER TABLE Trailer DROP COLUMN Truck_ID;
+
+ALTER TABLE Container DROP FOREIGN KEY Container_ibfk_1;
+ALTER TABLE Container DROP COLUMN Chassis_ID;
+
+-- 삭제 데이터 전용 Archive 생성
+CREATE TABLE Truck_Archive LIKE Truck;
+CREATE TABLE Chassis_Archive LIKE Chassis;
+CREATE TABLE Trailer_Archive LIKE Trailer;
+CREATE TABLE Container_Archive LIKE Container;
+
 
 -- 테스트 데이터 삽입
 
@@ -416,7 +437,7 @@ FROM (
 
 
 -- Chassis 데이터 삽입
-INSERT INTO Chassis (Chassis_ID, Status, Type, Truck_ID, Zone_ID)
+INSERT INTO Chassis (Chassis_ID, Status, Type, Zone_ID)
 SELECT 
     CONCAT('C_', LPAD(t.num, 4, '0')) AS Chassis_ID,
     'Available' AS Status,
@@ -425,7 +446,6 @@ SELECT
         WHEN t.num % 3 = 1 THEN 'Light'
         ELSE 'Tandem'
     END AS Type,
-    CONCAT('T_', LPAD(t.num, 4, '0')) AS Truck_ID,
     CONCAT('C_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
@@ -472,13 +492,12 @@ FROM (
 -- 53' 컨테이너는 45피트 컨테이너 + 섀시와 동급임
 
 -- Trailer 데이터 삽입
-INSERT INTO Trailer (Trailer_ID, Status, Type, Zone_ID, Truck_ID)
+INSERT INTO Trailer (Trailer_ID, Status, Type, Zone_ID)
 SELECT 
     CONCAT('TL_', LPAD(t.num, 4, '0')) AS Trailer_ID,
     'Available' AS Status,
     CASE WHEN t.num % 2 = 0 THEN '48\'' ELSE '53\'' END AS Type,
-    CONCAT('TL_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID,
-    NULL AS Truck_ID
+    CONCAT('TL_ZONE_', LPAD(t.num, 4, '0')) AS Zone_ID
 FROM (
     SELECT 1 AS num UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
     UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12

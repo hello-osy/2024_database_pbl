@@ -266,6 +266,7 @@
         this.currentZones = [];
       },
 
+      // 장비 추가
       async addEquipment() {
         if (!this.newEquipment.id || !this.newEquipment.zone) {
           alert("ID와 Zone을 입력해주세요.");
@@ -293,6 +294,8 @@
           console.error("Error adding equipment:", error.message);
         }
       },
+
+      // 장비 제거
       async deleteEquipment() {
         if (!this.equipmentToDelete) {
           alert("Please select an equipment to delete.");
@@ -302,7 +305,7 @@
         try {
           const payload = {
             id: this.equipmentToDelete,
-            type: this.selectedSiteType.toLowerCase(),
+            type: this.selectedSiteType.slice(0,-5),
           };
 
           const response = await axios.post("http://localhost:8080/api/equipment/delete", payload);

@@ -1209,6 +1209,72 @@ def add_equipment():
         return jsonify({"success": False, "message": "Error adding equipment", "error": str(e)}), 500
 
 
+@app.route("/api/equipment/delete", methods=["POST"])
+def delete_equipment():
+    """
+    API Endpoint to delete equipment from a zone.
+    """
+    try:
+        # 요청 데이터 받기
+        data = request.get_json()
+        equipment_id = data.get("id")
+        equipment_type = data.get("type").lower()[:-5]  # truck, chassis, container, trailer
+
+        if not all([equipment_id, equipment_type]):
+            return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+        # 테이블 매핑
+        table_mapping = {
+            "truck": "Truck",
+            "chassis": "Chassis",
+            "container": "Container",
+            "trailer": "Trailer",
+        }
+
+        if equipment_type not in table_mapping:
+            return jsonify({"success": False, "message": f"Invalid equipment type: {equipment_type}"}), 400
+
+
+        # Zone Status 변경경
+        query = f"""
+            UPDATE Zone
+            SET Status='Available'
+            WHERE Zone_ID In (
+                SELECT Zone_ID FROM {table_mapping[equipment_type]}
+                WHERE {table_mapping[equipment_type]}_ID = :equipment_id
+            )
+        """
+        db.session.execute(
+            text(query),
+            {"equipment_id": equipment_id},
+        )
+        db.session.commit()
+
+        # 데이터베이스에서 해당 장비 삭제
+        query = f"""
+        INSERT INTO {table_mapping[equipment_type]}_Archive SELECT * FROM {table_mapping[equipment_type]} WHERE {table_mapping[equipment_type]}_ID=:equipment_id;
+        DELETE FROM {table_mapping[equipment_type]} WHERE {table_mapping[equipment_type]}_ID=:equipment_id;
+        """
+
+        # DELETE FROM {table_mapping[equipment_type]}
+        # WHERE {table_mapping[equipment_type]}_ID = :equipment_id
+
+        db.session.execute(
+            text(query),
+            {"equipment_id": equipment_id},
+        )
+        db.session.commit()
+        
+
+        db.session.commit()
+        return jsonify({"success": True, "message": f"{equipment_type.capitalize()} deleted successfully!"}), 200
+
+    except Exception as e:
+        db.session.rollback()  # 롤백 처리
+        return jsonify({"success": False, "message": "Error deleting equipment", "error": str(e)}), 500
+
+
+
 # Flask 애플리케이션 실행
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
