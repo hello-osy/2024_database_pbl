@@ -893,9 +893,9 @@ def register_transport_log():
 
     # 입력 데이터 처리
     truck_id = data["truck"]["id"]
-    chassis_id = data.get("chassis", {}).get("id")  # 선택적
-    container_id = data.get("container", {}).get("id")  # 선택적
-    trailer_id = data.get("trailer", {}).get("id") if data.get("trailer") else None  # 선택적
+    chassis_id = data.get("chassis", {}).get("id") if data.get("chassis") else None
+    container_id = data.get("container", {}).get("id") if data.get("container") else None
+    trailer_id = data.get("trailer", {}).get("id") if data.get("trailer") else None
     arrive_zone = data["arriveZone"]
     driver_id = data["driver"]
 
@@ -947,6 +947,48 @@ def register_transport_log():
         )
 
         db.session.commit()
+
+        # 장비 : Truck, Chassis, Container, Trailer
+        # 장비를 Reserved로 status 변환 필요
+        if truck_id is not None:
+            query = """
+            UPDATE Truck
+            SET Status = 'Reserved'
+            WHERE Truck_ID=:truck_id;
+            """
+            db.session.execute(text(query),{"truck_id": truck_id})
+            db.session.commit()
+
+        if chassis_id is not None:
+            query = """
+            UPDATE Chassis
+            SET Status = 'Reserved'
+            WHERE Chassis_ID=:chassis_id;
+            """
+            db.session.execute(text(query),{"chassis_id": chassis_id})
+            db.session.commit()
+
+            
+        if container_id is not None:
+            query = """
+            UPDATE Container
+            SET Status = 'Reserved'
+            WHERE Container_ID=:container_id;
+            """
+            db.session.execute(text(query),{"container_id": container_id})
+            db.session.commit()
+
+            
+        if trailer_id is not None:
+            query = """
+            UPDATE Trailer
+            SET Status = 'Reserved'
+            WHERE Trailer_ID=:trailer_id;
+            """
+            db.session.execute(text(query),{"trailer_id": trailer_id})
+            db.session.commit()
+            
+        
         return jsonify({"success": True, "message": "Transport log registered successfully!"})
 
     except Exception as e:

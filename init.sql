@@ -562,10 +562,10 @@ SELECT
         ELSE NULL -- Trailer가 없는 경우 NULL
     END AS Trailer_ID,
     CONCAT('C_ZONE_', LPAD(t.num, 4, '0')) AS Depart_Zone_ID, -- 출발 Zone
-    DATE_ADD(CURDATE(), INTERVAL t.num DAY) AS Depart_Date, -- 출발 날짜
+    DATE_ADD(CURDATE(), INTERVAL t.num -90 DAY) AS Depart_Date, -- 출발 날짜 (한 달 전)
     CONCAT('T_ZONE_', LPAD(t.num, 4, '0')) AS Arrive_Zone_ID, -- 도착 Zone
-    DATE_ADD(CURDATE(), INTERVAL t.num + 1 DAY) AS Arrive_Date, -- 도착 날짜
-    0 AS Assigned,
+    DATE_ADD(CURDATE(), INTERVAL t.num -89 DAY) AS Arrive_Date, -- 도착 날짜 (한 달 전)
+    2 AS Assigned, -- Assigned 값을 2로 설정
     CONCAT('Transport log entry #', t.num) AS Log_Memo -- 로그 메모
 FROM (
     -- 숫자 1부터 20까지 생성
@@ -577,6 +577,7 @@ FROM (
 WHERE CONCAT('T_', LPAD(MOD(t.num - 1, 6) + 1, 4, '0')) IN (
     SELECT Truck_ID FROM Truck -- Truck 테이블의 Truck_ID를 참조
 );
+
 
 -- 미사용 Truck -> Zone 등록
 UPDATE Zone
