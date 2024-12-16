@@ -392,9 +392,12 @@ def update_profile():
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.json
+    print("Recieved full request data: ", data) # Debug
+    
     username = data.get('username')
     password = data.get('password')
     role_id = data.get('role_id')  # 클라이언트에서 전달한 Role ID
+    driver_phone = data.get('driver_phone')
 
     if not username or not password or not role_id:
         return jsonify({"success": False, "message": "Invalid input"}), 400
@@ -403,9 +406,13 @@ def signup():
         # User 테이블에 데이터 삽입
         print(f"Inserting into User: username={username}, role_id={role_id}")
         db.session.execute(text("""
-            INSERT INTO User (User_ID, UserName, Role_ID)
-            VALUES (:username, :username, :role_id)
-        """), {"username": username, "role_id": role_id})
+            INSERT INTO User (User_ID, UserName, Role_ID, Phone_Number)
+            VALUES (:username, :username, :role_id, :driver_phone)
+        """), {
+            "username": username,
+            "role_id": role_id,
+            "driver_phone": driver_phone
+        })
 
         # Password 테이블에 데이터 삽입
         print(f"Inserting into Password: username={username}")
@@ -423,11 +430,50 @@ def signup():
             """), {"username": username})
 
         elif role_id == '2':  # Driver
+            division = data.get('division')
+            truck_info = data.get('truck_info')
+
+            # Debug prints
+            print("Received division value:", division)
+            print("Received truck_info value:", truck_info)
+
+             # Validation
+            if not division:
+                return jsonify({"success": False, "message": "Division is required"}), 400
+            if not truck_info:
+                return jsonify({"success": False, "message": "Truck info is required"}), 400
+
+            # division 값을 division 이름으로 반환
+            division_map = {
+                '1': 'LA',
+                '2': 'PHX',
+                '3': 'HOU',
+                '4': 'MOB',
+                '5': 'SAV'
+            }
+            
+            # 트럭 값을 개인 여부로 반환
+            truck_info_map = {
+                '1': 'Private Truck',
+                '2': 'Company Truck'  
+            }
+            
+            current_location = division_map.get(division)
+            private_truck_info = truck_info_map.get(truck_info)
+            
+             # Debug prints for mapped values
+            print("Mapped location:", current_location)
+            print("Mapped truck info:", private_truck_info)
+            
             print(f"Inserting into Driver: username={username}")
             db.session.execute(text("""
-                INSERT INTO Driver (User_ID)
-                VALUES (:username)
-            """), {"username": username})
+                INSERT INTO Driver (User_ID, Current_Location, Private_Truck_Info)
+                VALUES (:username, :current_location, :private_truck_info)
+            """), {
+                "username": username,
+                "current_location": current_location,
+                "private_truck_info": private_truck_info
+            })
 
         # 데이터베이스 커밋
         db.session.commit()
