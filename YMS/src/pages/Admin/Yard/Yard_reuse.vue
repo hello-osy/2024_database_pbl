@@ -544,8 +544,9 @@
   background-color: #28a745;
 }
 .Reserved{
-  border: 2px solid #ffa726;
-  box-shadow: 0 0 8px #ffa726;
+  border: 2px solid #ba4cdb;
+  box-shadow: 0 0 8px #ba4cdb;
+  background-color: #ba4cdb;
 }
 
 
